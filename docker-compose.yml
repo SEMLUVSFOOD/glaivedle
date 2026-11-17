@@ -1,0 +1,30 @@
+# Works with Coolify's "Docker Compose" build pack and plain `docker compose up -d`.
+# Set APP_SECRET and ADMIN_PASSWORD in Coolify's environment variables (or a .env file).
+services:
+  glaivedle:
+    build:
+      context: .
+      args:
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-}
+        PUBLIC_URL: ${PUBLIC_URL:-https://glaivedle.lol}
+    image: glaivedle:latest
+    restart: unless-stopped
+    ports:
+      - "3000"
+    environment:
+      APP_SECRET: ${APP_SECRET:?set APP_SECRET}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      PUBLIC_URL: ${PUBLIC_URL:-https://glaivedle.lol}
+      ARTIST_SLUG: ${ARTIST_SLUG:-glaive}
+      ARTIST_NAME: ${ARTIST_NAME:-glaive}
+      DEEZER_ARTIST_ID: ${DEEZER_ARTIST_ID:-7411938}
+      GENIUS_ACCESS_TOKEN: ${GENIUS_ACCESS_TOKEN:-}
+      DAILY_TIMEZONE: ${DAILY_TIMEZONE:-Europe/Amsterdam}
+      LAUNCH_DATE: ${LAUNCH_DATE:-2026-11-17}
+      SYNC_INTERVAL_HOURS: ${SYNC_INTERVAL_HOURS:-24}
+      DATABASE_PATH: /data/glaivedle.db
+    volumes:
+      - glaivedle-data:/data
+
+volumes:
+  glaivedle-data:

@@ -1,0 +1,107 @@
+# glaivedle ✝
+
+**The daily glaive song guessing game** — live at [glaivedle.lol](https://glaivedle.lol).
+
+A fan-made, open-source -dle game in the spirit of Wordle, loldle and Hitster. Four new puzzles every day:
+
+| Mode        | How it works                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------- |
+| **Classic** | Guess any song. Tiles for project, type, year, collabs, length and track # turn 🟩 / 🟨 / 🟥, with ↑↓ hints. |
+| **Lyrics**  | One lyric line; every miss reveals the next line. 6 tries.                                                    |
+| **Audio**   | Heardle-style: 1s of the intro, growing with every miss or skip. 6 tries.                                     |
+| **Cover**   | A pixelated cover that sharpens with every miss. 6 tries.                                                     |
+
+- 📅 **Daily** puzzles (same for everyone, resets at midnight Europe/Amsterdam), streaks, stats and emoji sharing
+- 🗂 **Archive** — play every past day
+- ♾ **Endless** — unlocks per mode once you've finished that day's daily
+- 💀 **Hard mode** — adds unreleased songs and features, shorter audio clips, colourless covers; separate dailies and stats
+- 🛠 **Admin center** (`/admin`) — catalog stats, plays, today's answers, sync log, artist requests and song toggles
+- ✨ **Suggest an artist** — requests (with vote counting) land in the admin center
+- 📱 Mobile-first, styled after glaive's latest album _God Save The Three_
+
+Answers never reach the browser: rounds are AES-GCM sealed tokens, audio is sliced server-side to the unlocked
+length and covers are pixelated server-side.
+
+## Data sources
+
+Everything is synced automatically (on first boot and every `SYNC_INTERVAL_HOURS`):
+
+- **[Deezer API](https://developers.deezer.com/api)** — discography, track numbers, durations, release dates, collaborators, cover art and 30s previews (no key needed)
+- **[LRCLIB](https://lrclib.net)** — lyrics (open database, no key needed)
+- **[Genius API](https://docs.genius.com)** _(optional, `GENIUS_ACCESS_TOKEN`)_ — producer credits, unreleased songs for hard mode, and a lyrics fallback when LRCLIB has nothing
+
+## Stack
+
+Next.js 16 (App Router, Cache Components) · React 19 · Tailwind CSS 4 · SQLite (better-sqlite3) · sharp · zod · Vitest.
+No external database or cache needed — one container and one volume.
+
+## Running locally
+
+```bash
+pnpm install
+cp .env.example .env.local   # set APP_SECRET + ADMIN_PASSWORD
+pnpm dev                     # http://localhost:3000 — the first catalog sync starts automatically
+```
+
+```bash
+pnpm test        # unit tests
+pnpm lint        # eslint
+pnpm typecheck   # tsc
+pnpm build       # production build
+```
+
+## Deploying with Coolify
+
+**Option A — Dockerfile (recommended)**
+
+1. In Coolify: _New resource → Public/Private repository_ → this repo, build pack **Dockerfile**, port **3000**.
+2. Add a **persistent storage** volume mounted at **`/data`** (the SQLite database lives there).
+3. Set environment variables (see below) — at minimum `APP_SECRET` and `ADMIN_PASSWORD`.
+4. Enable _"Include Source Commit in Build"_ so the footer shows the deployed commit.
+5. Point your domain (e.g. `glaivedle.lol`) at the app and deploy. Healthcheck: `GET /api/health`.
+
+**Option B — Docker Compose**
+
+Choose the **Docker Compose** build pack; `docker-compose.yml` already defines the `/data` volume.
+The same file works anywhere with `docker compose up -d`.
+
+### Environment variables
+
+| Variable              | Required | Default                | Description                                               |
+| --------------------- | -------- | ---------------------- | --------------------------------------------------------- |
+| `APP_SECRET`          | ✅       | —                      | Long random string (`openssl rand -base64 48`)            |
+| `ADMIN_PASSWORD`      | ✅       | —                      | Password for `/admin`                                     |
+| `PUBLIC_URL`          |          | `https://glaivedle.lol`| Used for metadata                                         |
+| `GENIUS_ACCESS_TOKEN` |          | —                      | Enables producers, unreleased songs, lyrics fallback      |
+| `ARTIST_SLUG`         |          | `glaive`               | Artist key in the database                                |
+| `ARTIST_NAME`         |          | `glaive`               | Artist name used for lookups                              |
+| `DEEZER_ARTIST_ID`    |          | `7411938`              | Pin the Deezer artist                                     |
+| `DAILY_TIMEZONE`      |          | `Europe/Amsterdam`     | When the daily resets                                     |
+| `LAUNCH_DATE`         |          | `2026-11-17`           | Day of puzzle #1 (archive starts here)                    |
+| `SYNC_INTERVAL_HOURS` |          | `24`                   | Catalog re-sync interval (`0` disables)                   |
+| `DATABASE_PATH`       |          | `/data/glaivedle.db`   | SQLite file location                                      |
+
+## Multiple artists
+
+The data model (artists → releases → songs, puzzles and plays per artist) is artist-aware, and catalog sync
+works for any artist on Deezer. Right now the site runs one artist per deployment (`ARTIST_*` variables) with the
+glaive theme in `src/app/globals.css`. Fan requests from `/suggest` are collected in the admin center so the
+most-wanted artists can be added next.
+
+## Versioning & releases
+
+The project follows [Semantic Versioning](https://semver.org) and keeps a [CHANGELOG](CHANGELOG.md).
+The version (from `package.json`) and the commit SHA are shown in the site footer.
+
+```bash
+pnpm release:patch   # or release:minor / release:major — bumps package.json, commits and tags vX.Y.Z
+git push --follow-tags
+```
+
+## License
+
+[AGPL-3.0](LICENSE) © Sem Sannen — [semsannen.com](https://semsannen.com).
+If you host a modified version, you must publish your source code too.
+
+glaivedle is a fan project and is not affiliated with glaive, any label, Deezer, LRCLIB or Genius.
+Song metadata, artwork, previews and lyrics belong to their respective owners.
