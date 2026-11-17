@@ -81,9 +81,9 @@ function HelpBody() {
       </p>
       <p className="small">
         <span className="text-fg-hover">Released</span> uses only officially released songs.{" "}
-        <span className="text-fg-hover">Unreleased</span> adds leaks, unreleased songs and features, shortens audio clips and
-        drains the colour from covers – the hard way to play. Each has its own dailies, stats and streaks. Switch it and hide album
-        covers in{" "}
+        <span className="text-fg-hover">Unreleased</span> adds leaks, unreleased songs and features and shortens audio clips – the
+        hard way to play. <span className="text-fg-hover">ovine hall</span> is a separate switch. Each combination has its own
+        dailies, stats and streaks. Switch them and hide album covers in{" "}
         <span className="text-fg-hover">Settings</span>. New puzzles pick themselves at midnight, Amsterdam time.
       </p>
     </div>
@@ -102,7 +102,7 @@ function SettingsBody() {
         <PoolSwitch hard={hard} onChange={setHard} />
         <ul className="small space-y-1">
           <li className={hard ? "" : "text-fg-hover"}>
-            <span className="text-fg-hover">{POOL_LABEL.normal}</span> – {POOL_HINT.normal}. 1s audio intro, full-colour covers.
+            <span className="text-fg-hover">{POOL_LABEL.normal}</span> – {POOL_HINT.normal}. 1s audio intro.
           </li>
           <li className={hard ? "text-fg-hover" : ""}>
             <span className="text-fg-hover">{POOL_LABEL.hard}</span> – {POOL_HINT.hard}. The hard way to play.

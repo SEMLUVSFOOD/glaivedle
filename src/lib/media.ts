@@ -46,8 +46,8 @@ export async function previewBytes(deezerId: string): Promise<Buffer | null> {
   return buf;
 }
 
-export async function coverImage(url: string, blocks: number | null, grayscale: boolean): Promise<Buffer> {
-  const key = `${url}|${blocks}|${grayscale}`;
+export async function coverImage(url: string, blocks: number | null): Promise<Buffer> {
+  const key = `${url}|${blocks}`;
   const hit = imageCache.get(key);
   if (hit) return hit;
   let src = imageCache.get(url);
@@ -61,7 +61,6 @@ export async function coverImage(url: string, blocks: number | null, grayscale: 
     const small = await img.resize(blocks, blocks, { fit: "cover", kernel: "lanczos3" }).toBuffer();
     img = sharp(small).resize(size, size, { kernel: "nearest" });
   }
-  if (grayscale) img = img.grayscale();
   const out = await img.webp({ quality: 82 }).toBuffer();
   imageCache.set(key, out);
   return out;

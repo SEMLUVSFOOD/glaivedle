@@ -18,7 +18,7 @@ export async function GET(req: Request) {
       const clip = sliceMp3(buf, clipSeconds(t.n, !!t.h, !!t.f));
       return new Response(new Uint8Array(clip), { headers: { ...headers, "Content-Type": "audio/mpeg" } });
     }
-    const img = await coverImage(media.url, coverBlocks(t.n, !!t.f), !!t.h && !t.f);
+    const img = await coverImage(media.url, coverBlocks(t.n, !!t.f));
     return new Response(new Uint8Array(img), { headers: { ...headers, "Content-Type": "image/webp" } });
   } catch (e) {
     console.error("[media]", e);

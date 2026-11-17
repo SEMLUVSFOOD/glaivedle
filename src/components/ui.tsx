@@ -76,7 +76,7 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
 export const POOL_LABEL = { normal: "Released", hard: "Unreleased" } as const;
 export const POOL_HINT = {
   normal: "Only officially released songs from albums, EPs and singles",
-  hard: "Adds leaks, unreleased songs and features – shorter clips, colourless covers",
+  hard: "Adds leaks, unreleased songs and features – shorter audio clips",
 } as const;
 
 /** Released | Unreleased switch, shared by the game pages, archive, settings and stats. */
