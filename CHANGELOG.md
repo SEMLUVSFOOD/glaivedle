@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-18
+
+### Changed
+
+- ovine hall is its own switch, independent of Released / Unreleased: play released songs with or without
+  ovine hall, and unreleased songs with or without it. Each of the four combinations has its own daily.
+  The switch is always visible next to Released / Unreleased and in Settings; it starts off.
+- The database page has an "ovine hall" filter next to Released / Unreleased.
+
+### Compatibility
+
+- Saved games, dailies and endless unlocks from before keep working (pool ids 0–2 and old tokens are unchanged;
+  "released + ovine hall" is the new pool 3).
+
 ## [0.4.1] - 2026-11-18
 
 ### Fixed
@@ -87,7 +101,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - glaive "God Save The Three" theme, mobile-first layout.
 - Docker image, Docker Compose file and Coolify instructions; health endpoint.
 
-[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.2.0...v0.3.0

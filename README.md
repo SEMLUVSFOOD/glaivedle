@@ -41,8 +41,9 @@ Whenever the sync logic changes (`SYNC_VERSION` in `src/lib/sync.ts`), the next 
 - **[LRCLIB](https://lrclib.net)** — lyrics (open database, no key needed)
 - **Deezer search fallback** — Deezer's artist endpoint leaves out some releases (e.g. the _then i'll be happy_ EP
   and the 2020 singles), so the sync also searches for albums and features credited to the artist
-- **Alias projects** (`ALIAS_ARTISTS`, default glaive's throwaway alias _ovine hall_) — released under another name, so
-  they join the unreleased pool with audio previews and covers; players can switch ovine hall on/off
+- **Alias projects** (`ALIAS_ARTISTS`, default glaive's alias _ovine hall_) — released under another name, with audio
+  previews and covers. They have their **own switch**, independent of Released / Unreleased, so players can add
+  ovine hall to either pool (each combination has its own daily).
 - **Curated leaks** (`src/lib/leaks.ts`) — 64 leaked glaive songs compiled from the community tracker
   [unreleased.world](https://www.unreleased.world/glaive), grouped by era. They're added to hard mode, and any synced song
   with a matching title is forced to unreleased (so leaks never show up in normal mode).
@@ -100,7 +101,7 @@ The same file works anywhere with `docker compose up -d`.
 | `SYNC_INTERVAL_HOURS` |          | `24`                   | Catalog re-sync interval (`0` disables)                   |
 | `DATABASE_PATH`       |          | `/data/glaivedle.db`   | SQLite file location                                      |
 | `UNRELEASED_LABELS`   |          | `Too Lost`             | Comma-separated distributor labels treated as leaks → unreleased |
-| `ALIAS_ARTISTS`       |          | `ovinehall:ovine hall:213958057` | Other names the artist releases under (`slug:Name:deezerId`, comma-separated) → unreleased pool |
+| `ALIAS_ARTISTS`       |          | `ovinehall:ovine hall:213958057` | Other names the artist releases under (`slug:Name:deezerId`, comma-separated) → own on/off switch |
 | `ADOBE_FONTS_KIT`     |          | —                      | Adobe Fonts kit id for Helvetica Neue LT Pro (build-time) |
 
 ## Design & fonts
