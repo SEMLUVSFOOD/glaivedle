@@ -1,81 +1,90 @@
 "use client";
 import Link from "next/link";
-import { CalendarDays, ChevronRight } from "lucide-react";
 import { roundKey, type SavedRound } from "@/lib/client/storage";
 import { MODE_INFO, MODES, type Mode } from "@/lib/game/types";
+import { Collage } from "./Collage";
 import { Countdown } from "./Countdown";
-import { ModeIcon } from "./ModeIcon";
 import { useApp, useStored } from "./Providers";
 
-function ModeCard({ mode, i }: { mode: Mode; i: number }) {
+const pad = (n: number) => String(n).padStart(3, "0");
+
+export function useDailyStatus(mode: Mode) {
   const { meta, hard } = useApp();
   const saved = useStored<SavedRound | null>(roundKey(mode, hard, "daily", meta?.today ?? "x"), null);
   const r = saved?.round;
-  const status = r?.finished
-    ? r.won
-      ? `Solved in ${saved!.guesses.length}`
-      : "Missed"
-    : saved?.guesses.length
-      ? "In progress"
-      : "Not played";
+  if (r?.finished) return { tag: r.won ? String(saved!.guesses.length) : "x", label: r.won ? `Solved in ${saved!.guesses.length}` : "Missed", done: true };
+  if (saved?.guesses.length) return { tag: "…", label: "In progress", done: false };
+  return { tag: "–", label: "Not played", done: false };
+}
+
+function ModeLink({ mode }: { mode: Mode }) {
+  const s = useDailyStatus(mode);
   return (
-    <Link
-      href={`/${mode}`}
-      className="panel arch gilded fade-up group flex flex-col items-center px-3 pt-9 pb-4 text-center transition hover:-translate-y-0.5 hover:border-line-strong"
-      style={{ animationDelay: `${i * 70}ms` }}
-    >
-      <span className="mb-2 grid size-12 place-items-center rounded-full border border-line-strong bg-bg/40 text-gold transition group-hover:text-gold-2">
-        <ModeIcon mode={mode} size={22} />
-      </span>
-      <span className="font-serif text-xl font-bold sm:text-2xl">{MODE_INFO[mode].title}</span>
-      <span className="mt-0.5 text-[11px] leading-tight text-muted sm:text-xs">{MODE_INFO[mode].blurb}</span>
-      <span
-        className={`mt-3 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide uppercase ${
-          r?.finished ? (r.won ? "bg-ok/25 text-ok-2" : "bg-bad/25 text-[#e0827a]") : "bg-surface-3 text-faint"
-        }`}
-      >
-        {status}
-      </span>
+    <Link href={`/${mode}`} className="whitespace-nowrap no-underline">
+      <span className="u">{MODE_INFO[mode].title}</span>
+      <sup className="caption">[{s.tag}]</sup>
     </Link>
+  );
+}
+
+function Row({ mode, i }: { mode: Mode; i: number }) {
+  const s = useDailyStatus(mode);
+  return (
+    <li className="arrive grid grid-cols-[2rem_1fr_auto] items-baseline gap-x-3 py-[7px] sm:grid-cols-[3rem_9rem_1fr_9rem_6rem]" style={{ animationDelay: `${i * 50}ms` }}>
+      <span className="caption">0{i + 1}</span>
+      <span className="text-fg-hover">{MODE_INFO[mode].title}</span>
+      <span className="hidden sm:block">{MODE_INFO[mode].blurb}</span>
+      <span className={`hidden sm:block ${s.done ? "text-fg-hover" : ""}`}>{s.label}</span>
+      <Link href={`/${mode}`} className="text-right">
+        {s.done ? "View" : "Play"} →
+      </Link>
+    </li>
   );
 }
 
 export function Home() {
   const { meta, hard } = useApp();
+  const today = meta?.today ? new Date(meta.today + "T12:00:00Z") : null;
   return (
-    <div className="space-y-6">
-      <section className="pt-4 text-center">
-        <p className="text-[11px] tracking-[0.3em] text-faint uppercase">
-          {meta ? `Daily #${meta.number}` : "Daily"} {hard && "· hard mode"}
-        </p>
-        <h1 className="mt-2 font-serif text-4xl leading-[1.05] font-bold text-balance sm:text-5xl">
-          Guess the <span className="font-gothic gold-text font-normal">glaive</span> song
+    <div className="space-y-10 sm:space-y-14">
+      <section className="pt-[4vh] sm:pt-[10vh]">
+        <p className="script mb-1 text-[50px] leading-[0.9] sm:text-[78px]">guess the glaive song</p>
+        <h1 className="headline max-w-[16ch]">
+          {MODES.map((m, i) => (
+            <span key={m}>
+              <ModeLink mode={m} />
+              {i < MODES.length - 1 ? " " : ""}
+            </span>
+          ))}{" "}
+          <span className="whitespace-nowrap">– Daily {meta ? pad(meta.number) : "···"}</span>
         </h1>
-        <p className="mx-auto mt-3 max-w-md text-sm text-muted">
-          Four new puzzles every day. Beat a daily to unlock endless mode for it.
-        </p>
       </section>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        {MODES.map((m, i) => (
-          <ModeCard key={m} mode={m} i={i} />
-        ))}
-      </div>
+      <Collage />
 
-      {meta?.artist && !meta.artist.ready && (
-        <p className="panel p-4 text-center text-sm text-muted">
-          The song catalog is being imported for the first time — give it a minute and refresh.
+      <section className="small">
+        <div className="mb-2 flex items-baseline justify-between">
+          <span>
+            {today
+              ? today.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" })
+              : " "}
+            {hard && " – hard"}
+          </span>
+          <span className="flex items-center gap-2">
+            Next in <Countdown className="caption" />
+            <span className="sq" />
+          </span>
+        </div>
+        <ul>
+          {MODES.map((m, i) => (
+            <Row key={m} mode={m} i={i} />
+          ))}
+        </ul>
+        {meta?.artist && !meta.artist.ready && <p className="mt-4">The song catalog is being imported – refresh in a minute.</p>}
+        <p className="mt-6">
+          <Link href="/archive">Play past days →</Link>
         </p>
-      )}
-
-      <div className="flex flex-col items-center gap-3 text-sm text-muted sm:flex-row sm:justify-between">
-        <p>
-          New puzzles in <Countdown className="text-ivory" />
-        </p>
-        <Link href="/archive" className="btn btn-ghost h-10 min-h-10 text-sm">
-          <CalendarDays size={16} aria-hidden /> Play past days <ChevronRight size={14} aria-hidden />
-        </Link>
-      </div>
+      </section>
     </div>
   );
 }

@@ -33,13 +33,13 @@ export default async function SongsPage() {
     .all() as Row[];
   return (
     <div>
-      <h1 className="font-serif text-3xl font-bold">Songs</h1>
-      <p className="mt-1 mb-4 text-sm text-muted">
+      <h1 className="title">Songs</h1>
+      <p className="mt-1 mb-4 text-sm">
         Synced automatically from Deezer, LRCLIB &amp; Genius. Disable a song to remove it from guesses and future puzzles.
       </p>
-      <div className="panel overflow-x-auto">
+      <div className="box overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
-          <thead className="text-left text-[11px] tracking-wider text-faint uppercase">
+          <thead className="text-left text-[11px] tracking-wider caption">
             <tr>
               <th className="p-3">Song</th>
               <th className="p-3">Project</th>
@@ -51,14 +51,14 @@ export default async function SongsPage() {
           </thead>
           <tbody>
             {rows.map((s) => (
-              <tr key={s.id} className={`border-t border-line ${s.enabled ? "" : "opacity-45"}`}>
+              <tr key={s.id} className={`border-t border-faint ${s.enabled ? "" : "opacity-45"}`}>
                 <td className="p-3 font-medium">{s.title}</td>
-                <td className="p-3 text-muted">
+                <td className="p-3">
                   {s.unreleased ? "Unreleased" : s.rtitle} <span className="text-faint">· {typeLabel(s.unreleased ? "unreleased" : s.is_feature ? "feature" : (s.rtype ?? "single"))}</span>
                 </td>
-                <td className="p-3 tabular-nums text-muted">{s.release_date ?? "?"}</td>
-                <td className="p-3 tabular-nums text-muted">{fmtDuration(s.duration)}</td>
-                <td className="p-3 text-xs text-muted">
+                <td className="p-3 tabular-nums">{s.release_date ?? "?"}</td>
+                <td className="p-3 tabular-nums">{fmtDuration(s.duration)}</td>
+                <td className="p-3 text-xs">
                   {s.lyrics_source ? `lyrics:${s.lyrics_source}` : "no lyrics"} · {s.has_preview ? "audio" : "no audio"}
                 </td>
                 <td className="p-3 text-right">

@@ -16,6 +16,8 @@ type Ctx = {
   meta: Meta | null;
   hard: boolean;
   setHard: (v: boolean) => void;
+  covers: boolean;
+  setCovers: (v: boolean) => void;
   openDialog: (name: "help" | "stats") => void;
   dialog: "help" | "stats" | null;
   closeDialog: () => void;
@@ -62,6 +64,7 @@ export function useStored<T>(key: string, fallback: T): T {
 export function Providers({ children }: { children: React.ReactNode }) {
   const [meta, setMeta] = useState<Meta | null>(null);
   const hard = useStored<boolean>("hard", false);
+  const covers = useStored<boolean>("covers", true);
   const [dialog, setDialog] = useState<Ctx["dialog"]>(null);
 
   useEffect(() => {
@@ -98,10 +101,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [meta]);
 
   const setHard = useCallback((v: boolean) => save("hard", v), []);
+  const setCovers = useCallback((v: boolean) => save("covers", v), []);
   const closeDialog = useCallback(() => setDialog(null), []);
 
   return (
-    <AppCtx.Provider value={{ meta, hard, setHard, dialog, openDialog: setDialog, closeDialog }}>
+    <AppCtx.Provider value={{ meta, hard, setHard, covers, setCovers, dialog, openDialog: setDialog, closeDialog }}>
       {children}
     </AppCtx.Provider>
   );

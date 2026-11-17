@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { Check, Send } from "lucide-react";
 
 export function SuggestForm() {
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
@@ -18,7 +17,7 @@ export function SuggestForm() {
     const data = await res?.json().catch(() => ({}));
     if (res?.ok) {
       setState("done");
-      setMsg(data.duplicate ? "Someone already asked for them — we counted your vote!" : "Thanks! Your suggestion is in.");
+      setMsg(data.duplicate ? "Someone already asked for them – your vote is counted." : "Thank you. Your suggestion is in.");
     } else {
       setState("error");
       setMsg(data?.error ?? "Something went wrong, try again.");
@@ -27,35 +26,34 @@ export function SuggestForm() {
 
   if (state === "done") {
     return (
-      <div className="panel arch gilded px-6 pt-14 pb-8 text-center">
-        <Check className="mx-auto mb-3 text-ok-2" size={32} aria-hidden />
-        <p className="font-serif text-2xl font-semibold">{msg}</p>
-        <button type="button" className="btn btn-ghost mt-5" onClick={() => setState("idle")}>
-          Suggest another
+      <div className="arrive space-y-5">
+        <p className="script text-[60px] leading-[0.9]">received</p>
+        <p className="text-[19px] tracking-[-0.03em]">{msg}</p>
+        <button type="button" className="small hoverable underline underline-offset-4" onClick={() => setState("idle")}>
+          Suggest another →
         </button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="panel space-y-4 p-5">
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Artist name *</span>
-        <input name="name" required maxLength={80} className="input" placeholder="e.g. ericdoa" autoComplete="off" />
+    <form onSubmit={submit} className="small space-y-5">
+      <label className="block space-y-1.5">
+        <span className="caption block">01 – ARTIST *</span>
+        <input name="name" required maxLength={80} className="input" placeholder="ericdoa" autoComplete="off" />
       </label>
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Link (Spotify, Deezer, Genius…)</span>
+      <label className="block space-y-1.5">
+        <span className="caption block">02 – LINK</span>
         <input name="link" type="url" maxLength={300} className="input" placeholder="https://" inputMode="url" />
       </label>
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Anything else?</span>
-        <textarea name="note" maxLength={500} rows={3} className="input py-3" placeholder="Why should they be next?" />
+      <label className="block space-y-1.5">
+        <span className="caption block">03 – WHY THEM</span>
+        <textarea name="note" maxLength={500} rows={3} className="input py-3" />
       </label>
-      {/* honeypot */}
       <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
-      {state === "error" && <p className="text-sm text-[#e0625a]">{msg}</p>}
-      <button type="submit" className="btn btn-gold w-full" disabled={state === "sending"}>
-        <Send size={16} aria-hidden /> {state === "sending" ? "Sending…" : "Send suggestion"}
+      {state === "error" && <p className="text-bad">{msg}</p>}
+      <button type="submit" className="btn btn-fill w-full" disabled={state === "sending"}>
+        {state === "sending" ? "Sending…" : "Send suggestion"}
       </button>
     </form>
   );

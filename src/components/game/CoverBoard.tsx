@@ -5,26 +5,26 @@ import type { RoundView } from "@/lib/game/types";
 export function CoverBoard({ round }: { round: RoundView }) {
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   const src = round.reveal.mediaUrl!;
-  const loaded = loadedSrc === src;
+  const step = Math.min(round.step + 1, round.maxGuesses ?? 6);
   return (
-    <div className="panel arch gilded mx-auto w-full max-w-sm px-5 pt-12 pb-6">
-      <div className="relative mx-auto aspect-square w-full overflow-hidden rounded-lg border border-line-strong bg-surface-3 shadow-[var(--shadow)]">
-        {!loaded && <div className="absolute inset-0 animate-pulse bg-surface-3" />}
+    <div className="flex items-end gap-3">
+      <div className="relative aspect-square w-full max-w-[420px] bg-faint">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           key={src}
           src={src}
           alt={round.finished ? `Cover of ${round.answer?.title}` : "Pixelated mystery cover"}
           onLoad={() => setLoadedSrc(src)}
-          className={`size-full object-cover transition-opacity duration-500 ${round.finished ? "" : "pixelated"} ${
-            loaded ? "opacity-100" : "opacity-0"
+          className={`size-full object-cover transition-opacity duration-300 ${round.finished ? "" : "pixelated"} ${
+            loadedSrc === src ? "opacity-100" : "opacity-0"
           }`}
           draggable={false}
         />
       </div>
-      {!round.finished && (
-        <p className="mt-3 text-center text-xs text-faint">Every miss sharpens the image{round.hard ? " (no colour in hard mode)" : ""}.</p>
-      )}
+      <span className="small flex shrink-0 items-center gap-2 pb-1 tabular-nums">
+        {round.finished ? "06 / 06" : `0${step} / 0${round.maxGuesses ?? 6}`}
+        <span className="sq" />
+      </span>
     </div>
   );
 }

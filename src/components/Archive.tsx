@@ -1,9 +1,8 @@
 "use client";
 import Link from "next/link";
 import { roundKey, type SavedRound } from "@/lib/client/storage";
-import { addDays, daysBetween, formatPrettyDate } from "@/lib/dates";
-import { MODES, type Mode } from "@/lib/game/types";
-import { ModeIcon } from "./ModeIcon";
+import { addDays, daysBetween } from "@/lib/dates";
+import { MODE_INFO, MODES, type Mode } from "@/lib/game/types";
 import { useApp, useStored } from "./Providers";
 
 function Cell({ mode, date }: { mode: Mode; date: string }) {
@@ -11,38 +10,45 @@ function Cell({ mode, date }: { mode: Mode; date: string }) {
   const kind = date === meta?.today ? "daily" : "archive";
   const saved = useStored<SavedRound | null>(roundKey(mode, hard, kind, date), null);
   const r = saved?.round;
-  const tone = r?.finished ? (r.won ? "bg-ok/30 border-ok text-ivory" : "bg-bad/25 border-bad/70 text-ivory") : "border-line text-muted";
+  const state = r?.finished ? (r.won ? "won" : "lost") : "open";
   return (
     <Link
       href={kind === "daily" ? `/${mode}` : `/${mode}?d=${date}`}
-      className={`grid size-11 place-items-center rounded-lg border transition hover:border-gold ${tone}`}
-      aria-label={`${mode} ${date}${r?.finished ? (r.won ? " solved" : " missed") : ""}`}
+      className={`inline-flex items-center gap-1.5 rounded-[6px] px-1.5 py-1 no-underline ${
+        state === "won" ? "pill" : state === "lost" ? "text-bad line-through" : "hoverable underline"
+      }`}
+      aria-label={`${MODE_INFO[mode].title} ${date} ${state}`}
     >
-      <ModeIcon mode={mode} size={16} />
+      <span className="sm:hidden">{MODE_INFO[mode].title.slice(0, 2)}</span>
+      <span className="hidden sm:inline">{MODE_INFO[mode].title}</span>
     </Link>
   );
 }
 
 export function Archive() {
   const { meta } = useApp();
-  if (!meta) return <div className="panel h-64 animate-pulse" />;
+  if (!meta) return <p className="small">Loading…</p>;
   const n = daysBetween(meta.launchDate, meta.today) + 1;
   const days = Array.from({ length: Math.min(n, 365) }, (_, i) => addDays(meta.today, -i));
   return (
-    <ul className="space-y-2">
-      {days.map((d) => (
-        <li key={d} className="panel flex items-center gap-3 px-3 py-2.5">
-          <div className="min-w-0 flex-1">
-            <p className="font-serif text-lg leading-none font-bold">#{daysBetween(meta.launchDate, d) + 1}</p>
-            <p className="text-xs text-faint">{d === meta.today ? "Today" : formatPrettyDate(d)}</p>
-          </div>
-          <div className="flex gap-1.5">
-            {MODES.map((m) => (
-              <Cell key={m} mode={m} date={d} />
-            ))}
-          </div>
-        </li>
-      ))}
+    <ul className="small">
+      {days.map((d) => {
+        const date = new Date(d + "T12:00:00Z");
+        return (
+          <li key={d} className="grid grid-cols-[4.2rem_3rem_1fr] items-center gap-x-2 py-[5px] sm:grid-cols-[6rem_4rem_1fr]">
+            <span>
+              {String(date.getUTCMonth() + 1).padStart(2, "0")}.{String(date.getUTCDate()).padStart(2, "0")}{" "}
+              {date.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })}
+            </span>
+            <span className="caption">{String(daysBetween(meta.launchDate, d) + 1).padStart(3, "0")}</span>
+            <span className="flex flex-wrap justify-end gap-1 sm:justify-start sm:gap-3">
+              {MODES.map((m) => (
+                <Cell key={m} mode={m} date={d} />
+              ))}
+            </span>
+          </li>
+        );
+      })}
     </ul>
   );
 }

@@ -1,29 +1,19 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { Check, ExternalLink, Infinity as InfinityIcon, RotateCcw, Share2, Sparkles, Users } from "lucide-react";
 import { load, roundKey, type SavedRound } from "@/lib/client/storage";
 import { shareText } from "@/lib/client/share";
 import { MODE_INFO, MODES, type GuessEntry, type RoundView } from "@/lib/game/types";
 import { Countdown } from "../Countdown";
 import { useApp } from "../Providers";
-import { ModeIcon } from "../ModeIcon";
 
-export function EndCard({
-  round,
-  guesses,
-  onNextEndless,
-}: {
-  round: RoundView;
-  guesses: GuessEntry[];
-  onNextEndless: () => void;
-}) {
+export function EndCard({ round, guesses, onNextEndless }: { round: RoundView; guesses: GuessEntry[]; onNextEndless: () => void }) {
   const { meta, hard } = useApp();
   const [copied, setCopied] = useState(false);
   const a = round.answer;
 
   const share = async () => {
-    const text = shareText(round, guesses, typeof window !== "undefined" ? window.location.host : "glaivedle.lol");
+    const text = shareText(round, guesses, window.location.host);
     try {
       if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
         await navigator.share({ text });
@@ -38,95 +28,95 @@ export function EndCard({
   };
 
   const nextMode =
-    meta &&
-    MODES.find(
-      (m) => m !== round.mode && !load<SavedRound | null>(roundKey(m, hard, "daily", meta.today), null)?.round.finished,
-    );
+    meta && MODES.find((m) => m !== round.mode && !load<SavedRound | null>(roundKey(m, hard, "daily", meta.today), null)?.round.finished);
 
-  const heading = round.won
-    ? guesses.length === 1
-      ? "First try. Blessed."
-      : `Got it in ${guesses.length}!`
-    : "Not this time.";
+  const verdict = round.won ? (guesses.length === 1 ? "first try, blessed" : `got it in ${guesses.length}`) : "not this time";
 
   return (
-    <section className={`panel fade-up overflow-hidden ${round.won ? "glow-win" : ""}`} aria-live="polite">
-      <div className="flex flex-col items-center gap-4 px-5 pt-6 pb-5 text-center sm:flex-row sm:text-left">
+    <section className="arrive space-y-6" aria-live="polite">
+      <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-end">
         {a?.cover && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={a.cover.replace("1000x1000", "500x500")}
-            alt=""
-            className="size-36 shrink-0 rounded-lg border border-line-strong object-cover shadow-[var(--shadow)] sm:size-32"
-          />
+          <img src={a.cover.replace("1000x1000", "500x500")} alt="" className="aspect-square w-44 object-cover sm:w-56" />
         )}
-        <div className="min-w-0 flex-1">
-          <p className={`font-serif text-lg italic ${round.won ? "text-gold-2" : "text-muted"}`}>{heading}</p>
-          <h2 className="font-serif text-3xl leading-tight font-bold break-words">{a?.title ?? "—"}</h2>
-          <p className="mt-1 text-sm text-muted">
-            {a?.project !== a?.title && a?.project ? `${a.project} · ` : ""}
-            {a?.type}
-            {a?.year ? ` · ${a.year}` : ""}
-          </p>
-          <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-            {a?.deezerUrl && (
-              <a href={a.deezerUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost h-9 min-h-9 px-3 text-xs">
-                Listen on Deezer <ExternalLink size={13} aria-hidden />
-              </a>
-            )}
-            {a?.geniusUrl && (
-              <a href={a.geniusUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost h-9 min-h-9 px-3 text-xs">
-                Genius <ExternalLink size={13} aria-hidden />
-              </a>
-            )}
-          </div>
+        <div className="min-w-0">
+          <p className={`script mb-1 text-[52px] leading-[0.9] sm:text-[66px] ${round.won ? "text-ok" : "text-bad"}`}>{verdict}</p>
+          <h2 className="headline break-words">{a?.title ?? "—"}</h2>
         </div>
       </div>
 
-      {typeof round.solvers === "number" && round.kind === "daily" && (
-        <p className="flex items-center justify-center gap-1.5 border-t border-line py-2.5 text-xs text-muted">
-          <Users size={14} aria-hidden /> {round.solvers} {round.solvers === 1 ? "person has" : "people have"} solved today&apos;s{" "}
-          {MODE_INFO[round.mode].title.toLowerCase()}
-        </p>
-      )}
+      <dl className="small grid grid-cols-[6rem_1fr] gap-y-1">
+        {a?.project && a.project !== a.title && (
+          <>
+            <dt>Project</dt>
+            <dd className="text-fg-hover">{a.project}</dd>
+          </>
+        )}
+        <dt>Type</dt>
+        <dd className="text-fg-hover">{a?.type}</dd>
+        {a?.year && (
+          <>
+            <dt>Year</dt>
+            <dd className="text-fg-hover">{a.year}</dd>
+          </>
+        )}
+        {typeof round.solvers === "number" && round.kind === "daily" && (
+          <>
+            <dt>Solved by</dt>
+            <dd className="text-fg-hover">
+              {round.solvers} {round.solvers === 1 ? "person" : "people"} today
+            </dd>
+          </>
+        )}
+        <dt>Listen</dt>
+        <dd className="flex gap-4">
+          {a?.deezerUrl && (
+            <a href={a.deezerUrl} target="_blank" rel="noopener noreferrer">
+              Deezer →
+            </a>
+          )}
+          {a?.geniusUrl && (
+            <a href={a.geniusUrl} target="_blank" rel="noopener noreferrer">
+              Genius →
+            </a>
+          )}
+        </dd>
+      </dl>
 
-      <div className="grid gap-2 border-t border-line p-4 sm:grid-cols-2">
-        <button type="button" onClick={share} className="btn btn-gold w-full">
-          {copied ? <Check size={17} aria-hidden /> : <Share2 size={17} aria-hidden />}
-          {copied ? "Copied!" : "Share result"}
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button type="button" onClick={share} className="btn btn-fill">
+          {copied ? "Copied" : "Share result"}
         </button>
         {round.kind === "endless" ? (
-          <button type="button" onClick={onNextEndless} className="btn btn-ghost w-full">
-            <RotateCcw size={16} aria-hidden /> Next song
+          <button type="button" onClick={onNextEndless} className="btn">
+            Next song →
           </button>
         ) : round.kind === "daily" ? (
-          <Link href={`/${round.mode}?endless=1`} className="btn btn-ghost w-full">
-            <InfinityIcon size={17} aria-hidden /> Play endless
+          <Link href={`/${round.mode}?endless=1`} className="btn">
+            Endless {MODE_INFO[round.mode].title.toLowerCase()} →
           </Link>
         ) : (
-          <Link href="/archive" className="btn btn-ghost w-full">
+          <Link href="/archive" className="btn">
             Back to archive
-          </Link>
-        )}
-        {nextMode && round.kind === "daily" && (
-          <Link href={`/${nextMode}`} className="btn btn-ghost w-full sm:col-span-2">
-            <ModeIcon mode={nextMode} size={16} /> Next up: {MODE_INFO[nextMode].title}
           </Link>
         )}
       </div>
 
-      {round.kind === "daily" && (
-        <p className="border-t border-line py-3 text-center text-xs text-faint">
-          Next {MODE_INFO[round.mode].title.toLowerCase()} in <Countdown className="text-ivory" />
+      <div className="small space-y-1">
+        {nextMode && round.kind === "daily" && (
+          <p>
+            <Link href={`/${nextMode}`}>Next up: {MODE_INFO[nextMode].title} →</Link>
+          </p>
+        )}
+        {round.kind === "daily" && (
+          <p className="flex items-center gap-2">
+            New {MODE_INFO[round.mode].title.toLowerCase()} in <Countdown className="caption" />
+          </p>
+        )}
+        <p>
+          <Link href="/suggest">Want this for another artist? Suggest one →</Link>
         </p>
-      )}
-
-      <Link
-        href="/suggest"
-        className="flex items-center justify-center gap-2 border-t border-line bg-teal/10 px-4 py-3 text-sm text-teal-2 hover:bg-teal/20"
-      >
-        <Sparkles size={15} aria-hidden /> Loving this? Suggest the next artist
-      </Link>
+      </div>
     </section>
   );
 }

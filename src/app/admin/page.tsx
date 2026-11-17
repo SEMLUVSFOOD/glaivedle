@@ -1,5 +1,4 @@
 import { connection } from "next/server";
-import { RefreshCw } from "lucide-react";
 import { isAdmin } from "@/lib/admin/auth";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -10,10 +9,10 @@ import { syncAction } from "./actions";
 
 function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: string }) {
   return (
-    <div className="panel p-4">
-      <div className="text-[11px] tracking-wider text-faint uppercase">{label}</div>
+    <div className="box p-4">
+      <div className="text-[11px] tracking-wider caption">{label}</div>
       <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
-      {sub && <div className="mt-0.5 text-xs text-muted">{sub}</div>}
+      {sub && <div className="mt-0.5 text-xs">{sub}</div>}
     </div>
   );
 }
@@ -62,15 +61,14 @@ export default async function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-serif text-3xl font-bold">Dashboard</h1>
-          <p className="text-sm text-muted">
+          <h1 className="title">Dashboard</h1>
+          <p className="text-sm">
             {artist?.name ?? env.artistName} · today is {t} ({env.dailyTimezone}) · v{process.env.NEXT_PUBLIC_APP_VERSION} (
             {process.env.NEXT_PUBLIC_COMMIT_SHA})
           </p>
         </div>
         <form action={syncAction}>
-          <button className="btn btn-gold" disabled={running}>
-            <RefreshCw size={16} className={running ? "animate-spin" : ""} aria-hidden />
+          <button className="btn btn-fill" disabled={running}>
             {running ? "Syncing…" : "Sync catalog now"}
           </button>
         </form>
@@ -92,48 +90,48 @@ export default async function AdminDashboard() {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2">
-        <div className="panel p-4">
-          <h2 className="mb-3 font-serif text-xl font-semibold">Today&apos;s dailies</h2>
+        <div className="box p-4">
+          <h2 className="mb-3 nav-link">Today&apos;s dailies</h2>
           <table className="w-full text-sm">
             <tbody>
               {MODES.map((m) => {
                 const p = playsToday.find((x) => x.mode === m);
                 return (
-                  <tr key={m} className="border-t border-line first:border-0">
+                  <tr key={m} className="border-t border-faint first:border-0">
                     <td className="py-2 font-medium">{MODE_INFO[m].title}</td>
-                    <td className="py-2 text-muted">
+                    <td className="py-2">
                       {daily
                         .filter((x) => x.mode === m)
                         .map((x) => `${x.hard ? "💀 " : ""}${x.title ?? x.rtitle}`)
                         .join(" / ") || "not generated yet"}
                     </td>
-                    <td className="py-2 text-right tabular-nums text-muted">{p ? `${p.w}/${p.c} won` : "0"}</td>
+                    <td className="py-2 text-right tabular-nums">{p ? `${p.w}/${p.c} won` : "0"}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-        <div className="panel p-4">
-          <h2 className="mb-3 font-serif text-xl font-semibold">Most requested artists</h2>
+        <div className="box p-4">
+          <h2 className="mb-3 nav-link">Most requested artists</h2>
           {topRequests.length ? (
             <ol className="space-y-1 text-sm">
               {topRequests.map((r) => (
-                <li key={r.name} className="flex justify-between border-t border-line pt-1 first:border-0">
+                <li key={r.name} className="flex justify-between border-t border-faint pt-1 first:border-0">
                   <span>{r.name}</span>
-                  <span className="tabular-nums text-muted">{r.votes} vote{r.votes === 1 ? "" : "s"}</span>
+                  <span className="tabular-nums">{r.votes} vote{r.votes === 1 ? "" : "s"}</span>
                 </li>
               ))}
             </ol>
           ) : (
-            <p className="text-sm text-muted">No requests yet.</p>
+            <p className="text-sm">No requests yet.</p>
           )}
         </div>
       </section>
 
-      <section className="panel p-4">
-        <h2 className="mb-2 font-serif text-xl font-semibold">Last sync log</h2>
-        <pre className="max-h-72 overflow-auto rounded-lg bg-bg/60 p-3 text-xs leading-relaxed whitespace-pre-wrap text-muted">
+      <section className="box p-4">
+        <h2 className="mb-2 nav-link">Last sync log</h2>
+        <pre className="max-h-72 overflow-auto rounded-lg bg-faint/40 p-3 text-xs leading-relaxed whitespace-pre-wrap">
           {syncLog ?? "No sync has run yet."}
         </pre>
       </section>

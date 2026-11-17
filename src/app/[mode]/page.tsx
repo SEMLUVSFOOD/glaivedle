@@ -22,7 +22,7 @@ async function ModeGame({ params }: { params: PageProps<"/[mode]">["params"] }) 
 
 export default function ModePage({ params }: PageProps<"/[mode]">) {
   return (
-    <Suspense fallback={<div className="panel arch h-72 animate-pulse" />}>
+    <Suspense fallback={<p className="small">Loading</p>}>
       <ModeGame params={params} />
     </Suspense>
   );

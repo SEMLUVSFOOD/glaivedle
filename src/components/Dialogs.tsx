@@ -1,10 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { X } from "lucide-react";
 import { emptyStats, type Stats, statsKey } from "@/lib/client/storage";
 import { MODE_INFO, MODES, type Mode } from "@/lib/game/types";
 import { useApp, useStored } from "./Providers";
-import { ModeIcon } from "./ModeIcon";
 
 export function Dialogs() {
   const { dialog, closeDialog } = useApp();
@@ -22,74 +20,69 @@ export function Dialogs() {
       ref={ref}
       onClose={closeDialog}
       onClick={(e) => e.target === e.currentTarget && closeDialog()}
-      className="panel m-auto w-[min(34rem,calc(100vw-1.5rem))] max-h-[85dvh] overflow-y-auto p-0 backdrop:bg-black/70"
+      className="box m-auto max-h-[88dvh] w-[min(36rem,calc(100vw-2*var(--margin)))] overflow-y-auto p-0"
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-surface-2/95 px-5 py-3 backdrop-blur">
-        <h2 className="font-serif text-2xl font-semibold">{dialog === "stats" ? "Your stats" : "How to play"}</h2>
-        <button type="button" onClick={closeDialog} className="btn btn-icon -mr-2 text-muted" aria-label="Close">
-          <X size={20} />
+      <div className="sticky top-0 flex items-start justify-between bg-bg px-5 pt-5 pb-4">
+        <h2 className="title">{dialog === "stats" ? "Stats" : "Help"}</h2>
+        <button type="button" onClick={closeDialog} className="small hoverable underline underline-offset-4">
+          Close
         </button>
       </div>
-      <div className="p-5">{dialog === "stats" ? <StatsBody /> : dialog === "help" ? <HelpBody /> : null}</div>
+      <div className="px-5 pb-6">{dialog === "stats" ? <StatsBody /> : dialog === "help" ? <HelpBody /> : null}</div>
     </dialog>
   );
 }
 
-function Swatch({ cls, label }: { cls: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className={`tile ${cls} h-6! w-6! rounded-md!`} aria-hidden />
-      <span>{label}</span>
-    </div>
-  );
-}
+const HELP: Record<Mode, string> = {
+  classic: "Guess any song. Each tile compares it with the answer: project, type, year, collabs, length, track number. Unlimited guesses.",
+  lyrics: "One lyric line. Every miss reveals the next. Six tries.",
+  audio: "One second of the intro. Every miss or skip unlocks more. Six tries.",
+  cover: "A pixelated cover that sharpens with every miss. Six tries.",
+};
 
 function HelpBody() {
   return (
-    <div className="space-y-5 text-sm leading-relaxed text-muted">
-      <p className="text-ivory">
-        A new glaive puzzle every day in four modes. Finish a daily to unlock <b>endless</b> mode for it.
+    <div className="space-y-6">
+      <p className="text-[19px] leading-snug tracking-[-0.03em]">
+        A new glaive puzzle every day, in four modes. Finish a daily to unlock <i className="font-serif text-[21px]">endless</i> for it.
       </p>
-      <ul className="space-y-3">
-        {MODES.map((m) => (
-          <li key={m} className="flex gap-3">
-            <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full border border-line-strong text-gold">
-              <ModeIcon mode={m} size={16} />
-            </span>
-            <span>
-              <b className="text-ivory">{MODE_INFO[m].title}</b> — {HELP[m]}
-            </span>
+      <ul className="small space-y-3">
+        {MODES.map((m, i) => (
+          <li key={m} className="grid grid-cols-[2.2rem_5rem_1fr] gap-2">
+            <span className="caption pt-[3px]">0{i + 1}</span>
+            <span className="text-fg-hover">{MODE_INFO[m].title}</span>
+            <span>{HELP[m]}</span>
           </li>
         ))}
       </ul>
-      <div className="grid grid-cols-2 gap-2 rounded-xl border border-line p-3 text-xs">
-        <Swatch cls="tile-correct" label="Correct" />
-        <Swatch cls="tile-partial" label="Close / partly right" />
-        <Swatch cls="tile-wrong" label="Wrong" />
-        <Swatch cls="tile-unknown" label="Unknown data" />
-        <p className="col-span-2 pt-1 text-muted">↑ / ↓ means the answer is higher or lower (later year, longer song…).</p>
+      <div className="small grid grid-cols-2 gap-x-4 gap-y-2">
+        {[
+          ["tile-correct", "Correct"],
+          ["tile-partial", "Close / partly right"],
+          ["tile-wrong", "Wrong"],
+          ["tile-unknown", "No data"],
+        ].map(([c, l]) => (
+          <span key={c} className="flex items-center gap-2">
+            <span className={`tile ${c} size-4! p-0!`} aria-hidden />
+            {l}
+          </span>
+        ))}
+        <span className="col-span-2">↑ ↓ – the answer is higher or lower (later year, longer song, later track).</span>
       </div>
-      <p>
-        <b className="text-ivory">Hard mode</b> adds unreleased songs and features to the pool, shortens audio clips and
-        drains the colour from covers. It has its own daily puzzles and stats.
+      <p className="small">
+        <span className="text-fg-hover">Hard</span> adds unreleased songs and features, shortens audio clips and drains the colour
+        from covers. It has its own dailies and stats. <span className="text-fg-hover">Covers</span> off hides album art while
+        you guess. New puzzles pick themselves at midnight, Amsterdam time.
       </p>
-      <p>New puzzles drop at midnight (Amsterdam time). Past days live in the archive.</p>
     </div>
   );
 }
-
-const HELP: Record<Mode, string> = {
-  classic: "guess any song and compare its project, year, collabs, length and track number with the answer. Unlimited guesses.",
-  lyrics: "one lyric line is shown; every miss reveals the next line. Six tries.",
-  audio: "hear the first second; every miss or skip unlocks more of the intro. Six tries.",
-  cover: "name the release from a pixelated cover that sharpens with every miss. Six tries.",
-};
 
 function StatsBody() {
   const { hard } = useApp();
   return (
-    <div className="space-y-4">
-      <p className="text-xs uppercase tracking-widest text-faint">{hard ? "Hard mode" : "Normal mode"} · daily puzzles</p>
+    <div className="space-y-8">
+      <p className="caption">{hard ? "HARD" : "NORMAL"} – DAILY ONLY</p>
       {MODES.map((m) => (
         <ModeStats key={m} mode={m} hard={hard} />
       ))}
@@ -102,11 +95,12 @@ function ModeStats({ mode, hard }: { mode: Mode; hard: boolean }) {
   const buckets = mode === "classic" ? ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"] : ["1", "2", "3", "4", "5", "6", "X"];
   const max = Math.max(1, ...buckets.map((b) => s.dist[b] ?? 0));
   return (
-    <section className="rounded-xl border border-line p-3">
-      <h3 className="mb-2 flex items-center gap-2 font-serif text-lg font-semibold text-gold-2">
-        <ModeIcon mode={mode} size={16} /> {MODE_INFO[mode].title}
+    <section>
+      <h3 className="nav-link mb-3 flex items-center gap-2">
+        {MODE_INFO[mode].title}
+        <span className="sq" />
       </h3>
-      <div className="mb-3 grid grid-cols-4 text-center">
+      <dl className="small mb-3 grid grid-cols-4">
         {[
           ["Played", s.played],
           ["Win %", s.played ? Math.round((s.won / s.played) * 100) : 0],
@@ -114,23 +108,23 @@ function ModeStats({ mode, hard }: { mode: Mode; hard: boolean }) {
           ["Best", s.maxStreak],
         ].map(([l, v]) => (
           <div key={l}>
-            <div className="text-xl font-semibold tabular-nums">{v}</div>
-            <div className="text-[10px] uppercase tracking-wider text-faint">{l}</div>
+            <dd className="text-[26px] leading-none tracking-[-0.06em] text-fg-hover tabular-nums">{v}</dd>
+            <dt>{l}</dt>
           </div>
         ))}
-      </div>
-      <div className="space-y-1">
+      </dl>
+      <div className="space-y-[3px]">
         {buckets.map((b) => {
           const v = s.dist[b] ?? 0;
           return (
-            <div key={b} className="flex items-center gap-2 text-xs">
-              <span className="w-6 text-right tabular-nums text-faint">{b}</span>
-              <div
-                className={`h-4 rounded-sm px-1 text-right text-[10px] leading-4 tabular-nums ${b === "X" ? "bg-bad/80" : "bg-teal"}`}
-                style={{ width: `${Math.max(6, (v / max) * 100)}%` }}
+            <div key={b} className="flex items-center gap-2">
+              <span className="caption w-6 text-right">{b}</span>
+              <span
+                className={`caption flex h-[14px] items-center justify-end rounded-[2px] pr-1 text-[10px] text-bg ${b === "X" ? "bg-bad" : "bg-fg"}`}
+                style={{ width: `${Math.max(5, (v / max) * 100)}%` }}
               >
                 {v}
-              </div>
+              </span>
             </div>
           );
         })}

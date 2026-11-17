@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
 import { AUDIO_CLIPS, AUDIO_CLIPS_HARD, PREVIEW_SECONDS } from "@/lib/game/logic";
 import type { RoundView } from "@/lib/game/types";
 
+const fmt = (s: number) => `0:${String(Math.floor(s)).padStart(2, "0")}`;
+
+/** Styled after the glaivemusic.com video player: a black frame with "▶ Play" in the corner. */
 export function AudioBoard({ round }: { round: RoundView }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -14,16 +16,12 @@ export function AudioBoard({ round }: { round: RoundView }) {
   const clips = round.hard ? AUDIO_CLIPS_HARD : AUDIO_CLIPS;
   const scale = round.finished ? PREVIEW_SECONDS : clips[clips.length - 1];
 
-  // new clip unlocked → reset player
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
     a.pause();
-    setPlaying(false);
-    setPos(0);
-    setReady(false);
-    setFailed(false);
     a.load();
+    return () => a.pause();
   }, [round.reveal.mediaUrl]);
 
   useEffect(() => {
@@ -54,6 +52,7 @@ export function AudioBoard({ round }: { round: RoundView }) {
     }
     try {
       a.currentTime = 0;
+      setPos(0);
       await a.play();
       setPlaying(true);
     } catch {
@@ -61,16 +60,18 @@ export function AudioBoard({ round }: { round: RoundView }) {
     }
   };
 
-  const r = 52;
-  const C = 2 * Math.PI * r;
-  const progress = Math.min(1, pos / limit);
-
   return (
-    <div className="panel arch gilded flex flex-col items-center px-5 pt-12 pb-7">
+    <div>
       <audio
         ref={audioRef}
         src={round.reveal.mediaUrl}
         preload="auto"
+        onLoadStart={() => {
+          setReady(false);
+          setFailed(false);
+          setPlaying(false);
+          setPos(0);
+        }}
         onCanPlay={() => setReady(true)}
         onError={() => setFailed(true)}
         onEnded={() => setPlaying(false)}
@@ -79,52 +80,28 @@ export function AudioBoard({ round }: { round: RoundView }) {
         type="button"
         onClick={toggle}
         disabled={failed}
-        className="relative grid size-32 place-items-center rounded-full transition active:scale-95"
+        className="relative block aspect-video w-full max-w-2xl overflow-hidden bg-ink text-left"
         aria-label={playing ? "Pause" : `Play ${limit} seconds`}
       >
-        <svg viewBox="0 0 120 120" className="absolute inset-0 -rotate-90">
-          <circle cx="60" cy="60" r={r} fill="none" stroke="var(--line)" strokeWidth="6" />
-          <circle
-            cx="60"
-            cy="60"
-            r={r}
-            fill="none"
-            stroke="var(--gold-2)"
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeDasharray={C}
-            strokeDashoffset={C * (1 - progress)}
-          />
-        </svg>
-        <span className="grid size-22 place-items-center rounded-full bg-linear-to-b from-gold-2 to-gold text-[#24170c] shadow-[0_8px_30px_-8px_rgb(201_164_92/0.8)]">
-          {playing ? <Pause size={34} fill="currentColor" /> : <Play size={34} fill="currentColor" className="ml-1" />}
+        <span className="absolute inset-0 grid place-items-center">
+          <span className="caption text-[clamp(56px,18vw,120px)] font-bold text-[#3a3a3a] tabular-nums">
+            {fmt(playing ? pos : round.finished ? 30 : limit)}
+          </span>
+        </span>
+        {/* timeline */}
+        <span className="absolute inset-x-3 bottom-10 h-[3px] bg-[#2a2a2a]">
+          <span className="absolute inset-y-0 left-0 bg-[#5a5a5a]" style={{ width: `${(limit / scale) * 100}%` }} />
+          <span className="absolute inset-y-0 left-0 bg-white" style={{ width: `${(pos / scale) * 100}%` }} />
+          {!round.finished &&
+            clips.map((c) => <span key={c} className="absolute -top-1 h-[11px] w-px bg-[#444]" style={{ left: `${(c / scale) * 100}%` }} />)}
+        </span>
+        <span className="small absolute bottom-3 left-3 text-white">
+          {failed ? "Preview unavailable" : !ready ? "Loading…" : playing ? "❚❚ Pause" : "▶ Play"}
+        </span>
+        <span className="small absolute right-3 bottom-3 text-[#9a9a9a]">
+          {round.finished ? "Full preview" : `${limit}s unlocked`}
         </span>
       </button>
-      <p className="mt-4 text-sm text-muted">
-        {failed
-          ? "Couldn't load the preview. Try refreshing."
-          : !ready
-            ? "Loading clip…"
-            : round.finished
-              ? "Full preview unlocked"
-              : `${limit} second${limit === 1 ? "" : "s"} unlocked`}
-      </p>
-
-      {/* heardle-style timeline */}
-      <div className="mt-5 w-full max-w-md">
-        <div className="relative h-3 overflow-hidden rounded-full bg-surface-3/70">
-          <div className="absolute inset-y-0 left-0 bg-teal/70" style={{ width: `${(limit / scale) * 100}%` }} />
-          <div className="absolute inset-y-0 left-0 bg-gold-2" style={{ width: `${(pos / scale) * 100}%` }} />
-          {!round.finished &&
-            clips.map((c) => (
-              <span key={c} className="absolute inset-y-0 w-px bg-bg/80" style={{ left: `${(c / scale) * 100}%` }} />
-            ))}
-        </div>
-        <div className="mt-1 flex justify-between text-[11px] tabular-nums text-faint">
-          <span>0:{String(Math.floor(pos)).padStart(2, "0")}</span>
-          <span>0:{String(scale).padStart(2, "0")}</span>
-        </div>
-      </div>
     </div>
   );
 }

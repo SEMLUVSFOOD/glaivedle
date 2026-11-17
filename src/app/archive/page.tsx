@@ -5,9 +5,12 @@ export const metadata: Metadata = { title: "Archive" };
 
 export default function ArchivePage() {
   return (
-    <div>
-      <h1 className="font-serif text-3xl font-bold">Archive</h1>
-      <p className="mt-1 mb-5 text-sm text-muted">Missed a day? Every past puzzle is still playable. Archive games don&apos;t affect your streak.</p>
+    <div className="space-y-8">
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="headline">Archive</h1>
+        <span className="sq mt-3" />
+      </div>
+      <p className="small max-w-md">Every past daily is still playable. Archive games don&apos;t count towards your streak.</p>
       <Archive />
     </div>
   );

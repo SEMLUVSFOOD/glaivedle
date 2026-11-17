@@ -17,7 +17,7 @@ export function Countdown({ className = "" }: { className?: string }) {
   const m = Math.floor((left % 3_600_000) / 60_000);
   const s = Math.floor((left % 60_000) / 1000);
   return (
-    <span className={`font-mono tabular-nums ${className}`}>
+    <span className={`tabular-nums ${className}`}>
       {String(h).padStart(2, "0")}:{String(m).padStart(2, "0")}:{String(s).padStart(2, "0")}
     </span>
   );

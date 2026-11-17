@@ -1,36 +1,59 @@
 "use client";
 import Link from "next/link";
-import { CalendarDays, ChartColumn, CircleHelp, Skull } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useApp } from "./Providers";
 
-export function Header() {
-  const { hard, setHard, openDialog } = useApp();
+function Item({
+  children,
+  count,
+  selected,
+  ...rest
+}: { children: React.ReactNode; count?: React.ReactNode; selected?: boolean } & (
+  | ({ href: string } & React.AnchorHTMLAttributes<HTMLAnchorElement>)
+  | ({ href?: undefined } & React.ButtonHTMLAttributes<HTMLButtonElement>)
+)) {
+  const cls = `nav-link inline-flex items-start rounded-[10px] px-1.5 py-1 no-underline sm:px-2 ${selected ? "pill" : "hoverable"}`;
+  const inner = (
+    <>
+      <span className={rest.href && !selected ? "u" : ""}>{children}</span>
+      {count !== undefined && <sup className="caption">[{count}]</sup>}
+    </>
+  );
+  if ("href" in rest && rest.href) {
+    return (
+      <Link {...(rest as React.ComponentProps<typeof Link>)} className={cls} aria-current={selected ? "page" : undefined}>
+        {inner}
+      </Link>
+    );
+  }
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-bg/80 pt-[env(safe-area-inset-top)] backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-3xl items-center gap-1 px-3 sm:px-6">
-        <Link href="/" className="mr-auto flex items-baseline gap-2" aria-label="glaivedle home">
-          <span className="font-gothic gold-text text-[1.9rem] leading-none">glaivedle</span>
-        </Link>
-        <button
-          type="button"
-          onClick={() => setHard(!hard)}
-          aria-pressed={hard}
-          title="Hard mode: unreleased songs, features & tougher reveals"
-          className={`btn h-9 min-h-9 px-3 text-xs ${hard ? "btn-gold" : "btn-ghost text-muted"}`}
-        >
-          <Skull size={15} aria-hidden />
-          <span>{hard ? "Hard" : "Normal"}</span>
-        </button>
-        <Link href="/archive" className="btn btn-icon text-muted hover:text-ivory" aria-label="Archive">
-          <CalendarDays size={20} />
-        </Link>
-        <button type="button" onClick={() => openDialog("stats")} className="btn btn-icon text-muted hover:text-ivory" aria-label="Statistics">
-          <ChartColumn size={20} />
-        </button>
-        <button type="button" onClick={() => openDialog("help")} className="btn btn-icon text-muted hover:text-ivory" aria-label="How to play">
-          <CircleHelp size={20} />
-        </button>
-      </div>
+    <button type="button" {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)} className={cls} aria-pressed={selected}>
+      {inner}
+    </button>
+  );
+}
+
+export function Header() {
+  const { hard, setHard, covers, setCovers, openDialog, meta } = useApp();
+  const path = usePathname();
+  return (
+    <header className="flex items-start justify-between gap-2 px-[calc(var(--margin)-6px)] pt-[max(14px,env(safe-area-inset-top))] pb-6 sm:pb-12">
+      <Link href="/" className="script hoverable -mt-2 px-1.5 text-[54px] leading-[0.8] sm:text-[72px]" aria-label="glaivedle home">
+        glaivedle
+      </Link>
+      <nav className="flex flex-col items-end gap-y-0.5 sm:flex-row sm:items-start sm:gap-x-6" aria-label="Main">
+        <Item onClick={() => setHard(!hard)} selected={hard} count={hard ? "on" : "off"} title="Hard mode: unreleased songs, features, shorter clips">
+          Hard
+        </Item>
+        <Item onClick={() => setCovers(!covers)} selected={!covers} count={covers ? "on" : "off"} title="Show or hide album covers while guessing">
+          Covers
+        </Item>
+        <Item href="/archive" selected={path === "/archive"} count={meta ? meta.number : undefined}>
+          Archive
+        </Item>
+        <Item onClick={() => openDialog("stats")}>Stats</Item>
+        <Item onClick={() => openDialog("help")}>Help</Item>
+      </nav>
     </header>
   );
 }
