@@ -19,6 +19,8 @@ A fan-made, open-source -dle game in the spirit of Wordle, loldle and Hitster. F
 - 🗂 **Archive** — play every past day
 - ♾ **Endless** — unlocks per mode once you've finished that day's daily
 - 💀 **Released / Unreleased** — the "Unreleased" song pool (hard mode) adds leaks, unreleased songs and features, shorter audio clips, colourless covers; separate dailies and stats
+- 🗃 **Database** (`/database`) — every song in the game, searchable and filterable (released / unreleased, type), with
+  details per song; built for phones
 - 🛠 **Admin center** (`/admin`) — catalog stats, plays, today's answers, sync log, artist requests and song toggles
 - ✨ **Suggest an artist** — requests (with vote counting) land in the admin center
 - 🖼 **Covers toggle** — hide album art while guessing
@@ -34,7 +36,11 @@ at midnight (no admin action needed) and never repeat within ~60 days.
 
 - **[Deezer API](https://developers.deezer.com/api)** — discography, track numbers, durations, release dates, collaborators, cover art and 30s previews (no key needed)
 - **[LRCLIB](https://lrclib.net)** — lyrics (open database, no key needed)
-- **Curated leaks** (`src/lib/leaks.ts`) — ~75 leaked glaive songs compiled from the community tracker
+- **Deezer search fallback** — Deezer's artist endpoint leaves out some releases (e.g. the _then i'll be happy_ EP
+  and the 2020 singles), so the sync also searches for albums and features credited to the artist
+- **Alias projects** (`ALIAS_ARTISTS`, default glaive's throwaway alias _ovine hall_) — released under another name, so
+  they join the unreleased pool with audio previews and covers
+- **Curated leaks** (`src/lib/leaks.ts`) — 64 leaked glaive songs compiled from the community tracker
   [unreleased.world](https://www.unreleased.world/glaive), grouped by era. They're added to hard mode, and any synced song
   with a matching title is forced to unreleased (so leaks never show up in normal mode).
 - Releases uploaded through unofficial distributors (`UNRELEASED_LABELS`, e.g. _"im alright."_ via Too Lost) are treated as **unreleased** (hard mode only). Admins can override any song's status in `/admin/songs`; overrides survive re-syncs.
@@ -91,6 +97,7 @@ The same file works anywhere with `docker compose up -d`.
 | `SYNC_INTERVAL_HOURS` |          | `24`                   | Catalog re-sync interval (`0` disables)                   |
 | `DATABASE_PATH`       |          | `/data/glaivedle.db`   | SQLite file location                                      |
 | `UNRELEASED_LABELS`   |          | `Too Lost`             | Comma-separated distributor labels treated as leaks → unreleased |
+| `ALIAS_ARTISTS`       |          | `ovinehall:ovine hall:213958057` | Other names the artist releases under (`slug:Name:deezerId`, comma-separated) → unreleased pool |
 | `ADOBE_FONTS_KIT`     |          | —                      | Adobe Fonts kit id for Helvetica Neue LT Pro (build-time) |
 
 ## Design & fonts

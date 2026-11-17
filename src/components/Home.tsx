@@ -119,8 +119,9 @@ export function Home() {
         </ul>
         {meta?.artist && !meta.artist.ready && <p className="mt-4">The song catalog is being imported – refresh in a minute.</p>}
         <MobileDayStreak />
-        <p className="mt-6">
+        <p className="mt-6 flex flex-wrap gap-x-6 gap-y-1">
           <Link href="/archive">Play past days →</Link>
+          <Link href="/database">Browse every song →</Link>
         </p>
       </section>
     </div>

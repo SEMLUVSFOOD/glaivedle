@@ -5,6 +5,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- Streaks in every mode: daily (days in a row), endless (rounds in a row) and archive, per song pool, plus a cross-mode
+  day streak and an all-4 streak. Shown in the game header, end card, home, archive, header and stats.
+- Daily / Endless / Archive and Released / Unreleased switches on every game page; Settings dialog; filterable stats.
+- `/database`: every song in the game, searchable and filterable, built for phones.
+- 64 curated leaked songs (from unreleased.world), grouped by era, in the unreleased pool.
+- ovine hall (glaive's alias, `ALIAS_ARTISTS`): 19 songs with audio and covers in the unreleased pool.
+- Catalog sync finds releases Deezer's artist endpoint leaves out (the _then i'll be happy_ EP, 2020 singles) and
+  three times as many features.
+
+### Changed
+
+- "Hard" is now called "Unreleased" (and normal "Released") everywhere.
+- Big centred play button in audio mode; no more emoji in the UI or share text.
+
+### Fixed
+
+- Leaks like "im alright." no longer reach the released pool via old daily picks or the home collage.
+
 ## [0.3.0] - 2026-11-17
 
 ### Added

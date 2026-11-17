@@ -67,6 +67,8 @@ describe("normalisation", () => {
   it("strips features", () => {
     expect(stripFeatures("fall apart (with glaive)")).toBe("fall apart");
     expect(stripFeatures("THINK YOU RIGHT (feat. ericdoa & glaive)")).toBe("THINK YOU RIGHT");
+    expect(stripFeatures("uk bitches w/ kurtains")).toBe("uk bitches");
+    expect(featuresFromTitle("We The Best w/ wido, pitfall & kurtains")).toEqual(["wido", "pitfall", "kurtains"]);
   });
   it("normalises curly quotes and accents", () => {
     expect(normTitle("Y’all")).toBe(normTitle("Y'all"));

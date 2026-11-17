@@ -66,7 +66,36 @@ export async function findArtist(nameOrId: string): Promise<DzArtist | null> {
 export const artistAlbums = (artistId: string | number) =>
   all<DzAlbumSummary>(`/artist/${artistId}/albums?limit=100`);
 
-export const album = (albumId: string | number) => dz<{ id: number; label?: string }>(`/album/${albumId}`);
+export type DzAlbum = DzAlbumSummary & { label?: string; artist: { id: number; name: string } };
+
+export const album = (albumId: string | number) => dz<DzAlbum>(`/album/${albumId}`);
+
+/**
+ * Deezer's /artist/:id/albums silently leaves out some releases (e.g. glaive's "then i'll be happy"
+ * EP and early singles), so also look through search results for albums credited to the artist.
+ */
+export async function searchOwnAlbums(artist: DzArtist, knownIds: Set<number>): Promise<DzAlbumSummary[]> {
+  const ids = new Set<number>();
+  const q = encodeURIComponent(`artist:"${artist.name}"`);
+  for (const path of [`/search/album?q=${q}&limit=100`, `/search/track?q=${q}&limit=100`]) {
+    let next: string | undefined = path;
+    for (let i = 0; next && i < 4; i++) {
+      const page: DzPage<{ id: number; artist: { id: number }; album?: { id: number } }> = await dz(next);
+      for (const x of page.data) {
+        if (x.artist.id !== artist.id) continue;
+        const id = x.album?.id ?? x.id;
+        if (!knownIds.has(id)) ids.add(id);
+      }
+      next = page.next;
+    }
+  }
+  const out: DzAlbumSummary[] = [];
+  for (const id of ids) {
+    const a = await album(id).catch(() => null);
+    if (a && a.artist?.id === artist.id) out.push(a);
+  }
+  return out;
+}
 
 export const albumTracks = (albumId: string | number) =>
   all<DzTrackSummary>(`/album/${albumId}/tracks?limit=100`);
@@ -76,13 +105,18 @@ export const track = (trackId: string | number) => dz<DzTrack>(`/track/${trackId
 /** Tracks by *other* artists that credit this artist (features / collabs). */
 export async function featuredOn(artist: DzArtist): Promise<DzTrack[]> {
   const found = new Map<number, DzTrackSummary>();
-  for (const q of [artist.name, `feat ${artist.name}`, `with ${artist.name}`]) {
-    const res = await dz<DzPage<DzTrackSummary>>(`/search/track?q=${encodeURIComponent(q)}&limit=60`);
-    for (const t of res.data) if (t.artist.id !== artist.id) found.set(t.id, t);
+  const n = artist.name;
+  for (const q of [n, `feat ${n}`, `with ${n}`, `ft ${n}`, `${n} feat`]) {
+    let next: string | undefined = `/search/track?q=${encodeURIComponent(q)}&limit=100`;
+    for (let i = 0; next && i < 3; i++) {
+      const res: DzPage<DzTrackSummary> = await dz<DzPage<DzTrackSummary>>(next);
+      for (const t of res.data) if (t.artist.id !== artist.id) found.set(t.id, t);
+      next = res.next;
+    }
   }
   // Deezer often omits "feat." in titles, so verify contributor credits per candidate (capped).
   const out: DzTrack[] = [];
-  for (const id of [...found.keys()].slice(0, 120)) {
+  for (const id of [...found.keys()].slice(0, 450)) {
     try {
       const full = await track(id);
       if (full.contributors?.some((c) => c.id === artist.id)) out.push(full);

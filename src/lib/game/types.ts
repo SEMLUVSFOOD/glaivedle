@@ -73,3 +73,23 @@ export type GuessResponse = {
   entry: GuessEntry;
   round: RoundView;
 };
+
+/** One row of the public song database (/database). */
+export type CatalogSong = {
+  id: number;
+  title: string;
+  project: string;
+  type: string;
+  typeLabel: string;
+  pool: "released" | "unreleased";
+  date: string | null;
+  duration: number | null;
+  track: number | null;
+  collaborators: string[];
+  producers: string[];
+  cover: string | null;
+  lyrics: boolean;
+  audio: boolean;
+  deezerUrl: string | null;
+  geniusUrl: string | null;
+};

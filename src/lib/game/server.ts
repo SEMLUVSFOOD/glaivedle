@@ -15,7 +15,7 @@ import {
   selectLyricLines,
   typeLabel,
 } from "./logic";
-import { type AnswerInfo, type GuessEntry, type Kind, type Mode, MODE_INFO, type Option, type RoundView } from "./types";
+import { type AnswerInfo, type CatalogSong, type GuessEntry, type Kind, type Mode, MODE_INFO, type Option, type RoundView } from "./types";
 
 // ── Artist ───────────────────────────────────────────────────────────────
 
@@ -68,15 +68,20 @@ type SongRow = {
   r_title: string | null;
   r_type: string | null;
   r_cover: string | null;
+  r_label: string | null;
 };
 
+/** Released under an alias (ovine hall): unreleased pool, but with a real release. */
+const isAlias = (s: SongRow) => s.r_type === "alias";
+
 const SONG_SELECT = `
-  SELECT s.*, r.title AS r_title, r.type AS r_type, r.cover_url AS r_cover
+  SELECT s.*, r.title AS r_title, r.type AS r_type, r.cover_url AS r_cover, r.label AS r_label
   FROM songs s LEFT JOIN releases r ON r.id = s.release_id`;
 
 type ReleaseRow = { id: number; title: string; type: string; release_date: string | null; cover_url: string | null; deezer_id: string | null };
 
 function songType(s: SongRow): string {
+  if (isAlias(s)) return "alias";
   if (s.unreleased) return "unreleased";
   if (s.is_feature) return "feature";
   return s.r_type ?? "single";
@@ -84,6 +89,7 @@ function songType(s: SongRow): string {
 
 /** What a song's "project" is called: its release, or its leak era for unreleased songs. */
 function projectOf(s: SongRow): string {
+  if (isAlias(s)) return s.r_title ?? s.r_label ?? "Alias";
   if (s.unreleased) return eraLabel(s.era) ?? "Unreleased";
   return s.r_title ?? "Single";
 }
@@ -116,7 +122,7 @@ function coverReleases(artistId: number, hard: boolean): ReleaseRow[] {
     .prepare(
       `SELECT id, title, type, release_date, cover_url, deezer_id FROM releases
        WHERE artist_id = ? AND enabled = 1 AND cover_url IS NOT NULL
-       ${hard ? "" : `AND type NOT IN ('feature', 'unreleased')
+       ${hard ? "" : `AND type NOT IN ('feature', 'unreleased', 'alias')
          AND NOT EXISTS (SELECT 1 FROM songs s WHERE s.release_id = releases.id AND s.unreleased = 1)`}
        ORDER BY CASE type WHEN 'album' THEN 0 WHEN 'ep' THEN 1 WHEN 'single' THEN 2 ELSE 3 END, release_date`,
     )
@@ -160,23 +166,53 @@ export function options(artistId: number, mode: Mode, hard: boolean): Option[] {
   return guessableSongs(artistId, hard).map((s) => ({
     id: s.id,
     title: s.title,
-    sub: s.unreleased ? `Unreleased · ${eraLabel(s.era) ?? "leak"}` : (s.r_title ?? "Single"),
+    sub: isAlias(s)
+      ? `${s.r_label ?? "Alias"} · ${s.r_title}`
+      : s.unreleased
+        ? `Unreleased · ${eraLabel(s.era) ?? "leak"}`
+        : (s.r_title ?? "Single"),
     cover: s.r_cover ?? s.cover_url,
     year: s.release_date?.slice(0, 4) ?? null,
   }));
 }
 
+
+/** Every playable song, for the public database page. Never says which song is today's answer. */
+export function catalog(artistId: number): CatalogSong[] {
+  return guessableSongs(artistId, true).map((s) => {
+    const type = songType(s);
+    return {
+      id: s.id,
+      title: s.title,
+      project: projectOf(s),
+      type,
+      typeLabel: typeLabel(type),
+      pool: s.unreleased || s.is_feature ? "unreleased" : "released",
+      date: s.release_date,
+      duration: s.duration,
+      track: s.unreleased && !isAlias(s) ? null : s.track_number,
+      collaborators: JSON.parse(s.collaborators),
+      producers: JSON.parse(s.producers),
+      cover: (s.r_cover ?? s.cover_url)?.replace("1000x1000", "250x250") ?? null,
+      lyrics: !!s.lyrics,
+      audio: !!s.has_preview && !!s.deezer_id,
+      deezerUrl: s.deezer_id ? `https://www.deezer.com/track/${s.deezer_id}` : null,
+      geniusUrl: s.genius_url,
+    };
+  });
+}
+
 function toClassic(s: SongRow): ClassicSong {
   return {
     id: s.id,
-    releaseId: s.unreleased ? null : s.release_id,
+    releaseId: s.unreleased && !isAlias(s) ? null : s.release_id,
     project: s.unreleased ? projectOf(s) : (s.r_title ?? "—"),
     type: songType(s),
     year: s.release_date ? Number(s.release_date.slice(0, 4)) : null,
     collaborators: JSON.parse(s.collaborators),
     producers: JSON.parse(s.producers),
     duration: s.duration,
-    trackNumber: s.unreleased ? null : s.track_number,
+    trackNumber: s.unreleased && !isAlias(s) ? null : s.track_number,
   };
 }
 

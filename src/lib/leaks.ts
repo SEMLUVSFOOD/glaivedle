@@ -3,7 +3,10 @@
  *
  * Compiled from the community tracker at https://www.unreleased.world/glaive (Nov 2026).
  * Only full songs are listed: earlier versions of released songs, remixes, covers,
- * DJ sets, livestreams and sub-minute snippets are left out. Years are the era's
+ * DJ sets, livestreams and sub-minute snippets are left out. Every title was checked
+ * against Deezer (Nov 2026): songs that turned out to be officially released — on the
+ * "then i'll be happy" EP with ericdoa, as 2020 singles, as features on other artists'
+ * tracks or under the ovine hall alias — were removed, the sync picks those up itself. Years are the era's
  * leak/recording year, durations are taken from the tracker's (latest) version.
  *
  * Any synced song whose title matches an entry here is forced to "unreleased",
@@ -39,10 +42,8 @@ export const LEAKS: Leak[] = [
   s("Scrapes N Cuts", "soundcloud", 134),
   s("Dragunov", "soundcloud", 106),
   s("Boof.jfif", "soundcloud", 134),
-  s("Robinz", "soundcloud", 179),
   s("Scream", "soundcloud", 132),
   s("Ksubi Blessings", "soundcloud", 132),
-  s("Life Is Pain", "soundcloud", 93),
   s("Mimikyu", "soundcloud", 105),
   s("Ten Ton Truck", "soundcloud", 124),
   s("Why Does My Head Always Hurt So Bad", "soundcloud", 98),
@@ -52,8 +53,6 @@ export const LEAKS: Leak[] = [
   s("Everything", "cg", 137),
   s("GET USED TO IT", "cg", 205),
   s("Im A Mess", "cg", 118),
-  s("Its All A Waste", "cg", 159),
-  s("October's Lullaby", "cg", 91),
   s("Quicksand", "cg", 136),
 
   // all dogs go to heaven era (2021)
@@ -64,17 +63,13 @@ export const LEAKS: Leak[] = [
   s("Crynomore", "adgth", 108),
   s("Forget Her", "adgth", 94),
   s("Fuck It", "adgth", 122),
-  s("Fuck This Town", "adgth", 115),
   s("Function", "adgth", 119),
   s("Grow Up", "adgth", 97),
-  s("Handle Me", "adgth", 134),
-  s("Heather", "adgth", 112),
   s("Hoohohohoh", "adgth", 144),
   s("I Hate 2 See U Cry", "adgth", 127),
   s("Perfect", "adgth", 108),
   s("Rigor Mortis (555)", "adgth", 139),
   s("Seven Deadly Sins", "adgth", 122),
-  s("THINK YOU RIGHT", "adgth", 113),
 
   // old dog, new tricks era (2021–2022) — "im alright." was uploaded via Too Lost in Sept 2021
   s("im alright.", "odnt", 106),
@@ -85,12 +80,10 @@ export const LEAKS: Leak[] = [
 
   // i care so much that i dont care at all era (2022–2023)
   s("Coke / Blow", "icsmtidcaa", 147),
-  s("More Than Life", "icsmtidcaa", 196),
   s("A Mattress Is A Man's Best Friend", "icsmtidcaa", 133),
   s("Crying Like A Bitch", "icsmtidcaa", 101),
   s("DEVO4KA", "icsmtidcaa", 160),
   s("Don't Bring This Up Again", "icsmtidcaa", 155),
-  s("For U", "icsmtidcaa", 115),
   s("Fear Of God And The Catholic Church", "icsmtidcaa", 123),
   s("Fruit & Cookie & A Cute Little Muffin", "icsmtidcaa", 188),
   s("I Met The Devil In Barcelona", "icsmtidcaa", 97),
@@ -119,5 +112,9 @@ export const LEAKS: Leak[] = [
   s("Throw It Up", "minf", 210),
 ];
 
-export const eraLabel = (key: string | null | undefined) =>
-  key && key in ERAS ? ERAS[key as EraKey].label : null;
+/** Display name of a song's era: a leak era, or "ovine hall" for alias releases ("alias:<slug>"). */
+export function eraLabel(key: string | null | undefined, aliasName?: string | null): string | null {
+  if (!key) return null;
+  if (key.startsWith("alias:")) return aliasName ?? key.slice(6);
+  return key in ERAS ? ERAS[key as EraKey].label : null;
+}

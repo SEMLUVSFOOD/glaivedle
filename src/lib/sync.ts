@@ -7,8 +7,8 @@ import * as genius from "./sources/genius";
 import * as lrclib from "./sources/lrclib";
 import { ERAS, type Leak, LEAKS } from "./leaks";
 
-type ReleaseType = "album" | "ep" | "single" | "feature" | "unreleased";
-const RANK: Record<ReleaseType, number> = { album: 0, ep: 1, single: 2, feature: 3, unreleased: 4 };
+type ReleaseType = "album" | "ep" | "single" | "feature" | "unreleased" | "alias";
+const RANK: Record<ReleaseType, number> = { album: 0, ep: 1, single: 2, feature: 3, unreleased: 4, alias: 5 };
 
 type ReleaseDraft = {
   key: string; // deezer id or synthetic
@@ -92,10 +92,13 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
       artistId,
     );
 
-    const albums = (await deezer.artistAlbums(artist.id)).filter(
-      (a) => a.record_type !== "compile" && !isVariantTitle(a.title),
-    );
-    say(`Found ${albums.length} releases`);
+    const listed = await deezer.artistAlbums(artist.id);
+    const extra = await deezer.searchOwnAlbums(artist, new Set(listed.map((a) => a.id))).catch((e: Error) => {
+      say(`Release search failed: ${e.message}`);
+      return [];
+    });
+    const albums = [...listed, ...extra].filter((a) => a.record_type !== "compile" && !isVariantTitle(a.title));
+    say(`Found ${albums.length} releases (${extra.length} only via search: ${extra.map((a) => a.title).join(", ") || "none"})`);
 
     const songs = new Map<string, SongDraft>();
     const allReleases = new Map<string, ReleaseDraft>();
@@ -321,6 +324,54 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
     applyLeaks(songs, LEAKS);
     say(`Leaks: ${LEAKS.length} curated leaked songs applied`);
 
+    // ── 3c. Alias projects (e.g. ovine hall): released under another name → unreleased pool ──
+    for (const alias of env.aliasArtists) {
+      try {
+        const aliasAlbums = (await deezer.artistAlbums(alias.deezerId)).filter((a) => !isVariantTitle(a.title));
+        let n = 0;
+        for (const album of aliasAlbums) {
+          const release: ReleaseDraft = {
+            key: String(album.id),
+            title: album.title,
+            label: alias.name,
+            type: "alias",
+            releaseDate: album.release_date || null,
+            cover: album.cover_xl || album.cover_big || null,
+          };
+          allReleases.set(release.key, release);
+          for (const [i, t] of (await deezer.albumTracks(album.id)).entries()) {
+            const norm = normTitle(t.title);
+            if (!norm || isVariantTitle(t.title)) continue;
+            const prev = songs.get(norm);
+            // an official glaive release of the same song wins over the alias upload
+            if (prev && !prev.unreleased) continue;
+            songs.set(norm, {
+              norm,
+              title: stripFeatures(t.title),
+              release,
+              trackNumber: t.track_position ?? i + 1,
+              duration: t.duration || null,
+              releaseDate: release.releaseDate,
+              deezerId: String(t.id),
+              geniusId: prev?.geniusId ?? null,
+              geniusUrl: prev?.geniusUrl ?? null,
+              cover: release.cover,
+              collaborators: featuresFromTitle(t.title),
+              producers: prev?.producers ?? [],
+              hasPreview: !!t.preview,
+              unreleased: true,
+              isFeature: false,
+              era: `alias:${alias.slug}`,
+            });
+            n++;
+          }
+        }
+        say(`Alias ${alias.name}: ${aliasAlbums.length} releases, ${n} songs (unreleased pool)`);
+      } catch (e) {
+        say(`Alias ${alias.name} failed: ${(e as Error).message}`);
+      }
+    }
+
     // ── 4. Persist ─────────────────────────────────────────────────────
     const upsertRelease = d.prepare(`
       INSERT INTO releases (artist_id, deezer_id, title, title_norm, type, release_date, cover_url, label)
@@ -410,7 +461,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
     // ── 5. Lyrics: LRCLIB first, Genius scrape as fallback ──────────────
     const needLyrics = d
       .prepare(
-        `SELECT s.id, s.title, s.duration, s.genius_url, r.title AS album, s.is_feature
+        `SELECT s.id, s.title, s.duration, s.genius_url, r.title AS album, s.is_feature, s.era
          FROM songs s LEFT JOIN releases r ON r.id = s.release_id
          WHERE s.artist_id = ? AND s.lyrics IS NULL
            AND (s.lyrics_checked_at IS NULL OR s.lyrics_checked_at < datetime('now', '-3 days'))`,
@@ -422,6 +473,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
       genius_url: string | null;
       album: string | null;
       is_feature: number;
+      era: string | null;
     }[];
     const setLyrics = d.prepare(
       "UPDATE songs SET lyrics = ?, lyrics_source = ?, lyrics_checked_at = datetime('now') WHERE id = ?",
@@ -429,7 +481,8 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
     let fromLrc = 0;
     let fromGenius = 0;
     for (const s of needLyrics) {
-      let lyrics = await lrclib.lyricsFor(artist.name, s.title, s.album, s.duration).catch(() => null);
+      const alias = env.aliasArtists.find((a) => s.era === `alias:${a.slug}`);
+      let lyrics = await lrclib.lyricsFor(alias?.name ?? artist.name, s.title, s.album, s.duration).catch(() => null);
       let source = "lrclib";
       if (!lyrics && s.genius_url) {
         lyrics = await genius.scrapeLyrics(s.genius_url);

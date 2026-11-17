@@ -46,6 +46,9 @@ export function Header() {
         <Item href="/archive" selected={path === "/archive"} count={meta ? meta.number : undefined}>
           Archive
         </Item>
+        <Item href="/database" selected={path === "/database"}>
+          Database
+        </Item>
         <Item onClick={() => openDialog("stats")} selected={dialog === "stats"} count={<HeaderStreak />}>
           Stats
         </Item>

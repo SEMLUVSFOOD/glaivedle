@@ -39,5 +39,14 @@ export const env = {
     .split(",")
     .map((l) => l.trim().toLowerCase())
     .filter(Boolean),
+  /**
+   * Other names the artist releases under ("slug:Name:deezerId", comma-separated). Their songs join the
+   * unreleased pool (hard mode) with audio + covers. Default: glaive's throwaway alias ovine hall.
+   */
+  aliasArtists: str("ALIAS_ARTISTS", "ovinehall:ovine hall:213958057")
+    .split(",")
+    .map((x) => x.trim().split(":"))
+    .filter((p) => p.length === 3 && /^\d+$/.test(p[2]))
+    .map(([slug, name, deezerId]) => ({ slug, name, deezerId })),
   syncIntervalHours: Number(str("SYNC_INTERVAL_HOURS", "24")) || 0,
 };

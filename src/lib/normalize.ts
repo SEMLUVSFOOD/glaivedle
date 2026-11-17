@@ -8,6 +8,7 @@ export function stripFeatures(title: string): string {
   return title
     .replace(/\s*[([](?:feat\.?|ft\.?|featuring|with|prod\.?(?: by)?)\s[^)\]]*[)\]]/gi, "")
     .replace(/\s+-\s+(?:feat\.?|ft\.?|featuring)\s.*$/i, "")
+    .replace(/\s+w\/\s?.*$/i, "")
     .trim();
 }
 
@@ -28,7 +29,7 @@ export function isVariantTitle(title: string): boolean {
 
 /** Pulls "feat. A, B & C" names out of a title. */
 export function featuresFromTitle(title: string): string[] {
-  const m = title.match(/[([](?:feat\.?|ft\.?|featuring|with)\s([^)\]]+)[)\]]/i);
+  const m = title.match(/[([](?:feat\.?|ft\.?|featuring|with)\s([^)\]]+)[)\]]/i) ?? title.match(/\s+w\/\s?(.+)$/i);
   if (!m) return [];
   return m[1]
     .split(/\s*(?:,|&|\band\b|\bx\b)\s*/i)
