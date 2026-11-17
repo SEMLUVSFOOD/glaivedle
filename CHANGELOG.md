@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-18
+
+### Changed
+
+- New favicon set in the site's style: the P22 Zaner "g" in #757575 on #d5d5d5 (SVG favicon, favicon.ico,
+  Apple touch icon, 192/512px app icons) plus a web app manifest for "Add to Home Screen".
+
+### Fixed
+
+- Cover mode no longer turns album covers grey when Unreleased songs are on. That was a leftover "hard mode" twist
+  from before Unreleased became a song pool rather than a difficulty.
+
 ## [0.5.0] - 2026-11-18
 
 ### Changed
@@ -101,7 +113,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - glaive "God Save The Three" theme, mobile-first layout.
 - Docker image, Docker Compose file and Coolify instructions; health endpoint.
 
-[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.3.0...v0.4.0
