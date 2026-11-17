@@ -52,6 +52,17 @@ declare global {
 export type SyncResult = { ok: boolean; songs: number; log: string[] };
 
 /** Runs a full catalog sync for the configured artist. Concurrent calls share one run. */
+/**
+ * Bump whenever the sync logic changes (new sources, classification rules, leaks list…).
+ * On boot, a catalog produced by an older version is re-synced immediately instead of
+ * waiting for the 24h interval – otherwise a deploy keeps serving the old catalog.
+ */
+export const SYNC_VERSION = "2026-11-18.1";
+
+export function syncedVersion(): string | null {
+  return (db().prepare("SELECT value FROM meta WHERE key = 'sync_version'").get() as { value: string } | undefined)?.value ?? null;
+}
+
 export function syncArtist(opts: { slug?: string; name?: string; deezerId?: string } = {}): Promise<SyncResult> {
   globalThis.__glaivedleSync ??= doSync({
     slug: opts.slug ?? env.artistSlug,
@@ -79,6 +90,10 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
   const artistRow = d.prepare("SELECT id FROM artists WHERE slug = ?").get(slug) as { id: number };
   const artistId = artistRow.id;
   d.prepare("UPDATE artists SET sync_status = 'running' WHERE id = ?").run(artistId);
+  if (syncedVersion() !== SYNC_VERSION) {
+    // new sync logic: retry lyric lookups that failed under the old rules
+    d.prepare("UPDATE songs SET lyrics_checked_at = NULL WHERE artist_id = ? AND lyrics IS NULL").run(artistId);
+  }
 
   try {
     // ── 1. Deezer: official catalogue ───────────────────────────────────
@@ -497,6 +512,9 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
     d.prepare(
       "UPDATE artists SET sync_status = 'ok', last_synced_at = datetime('now'), sync_log = ? WHERE id = ?",
     ).run(log.join("\n"), artistId);
+    d.prepare("INSERT INTO meta (key, value) VALUES ('sync_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(
+      SYNC_VERSION,
+    );
     return { ok: true, songs: songs.size, log };
   } catch (e) {
     say(`FAILED: ${(e as Error).message}`);

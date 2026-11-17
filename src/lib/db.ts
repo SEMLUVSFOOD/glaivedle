@@ -132,6 +132,13 @@ const MIGRATIONS: { id: number; sql: string }[] = [
       );
     `,
   },
+  {
+    id: 5,
+    sql: /* sql */ `
+      -- small key/value store, e.g. which sync logic version produced the current catalog
+      CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
+    `,
+  },
 ];
 
 declare global {

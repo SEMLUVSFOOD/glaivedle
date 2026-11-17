@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "./db";
 import { env } from "./env";
-import { syncArtist } from "./sync";
+import { SYNC_VERSION, syncArtist, syncedVersion } from "./sync";
 
 declare global {
   var __glaivedleJobs: boolean | undefined;
@@ -18,8 +18,11 @@ export function startBackgroundJobs() {
     .get(env.artistSlug) as { last_synced_at: string | null; sync_status: string | null } | undefined;
 
   const hours = env.syncIntervalHours;
+  const outdated = syncedVersion() !== SYNC_VERSION;
+  if (outdated) console.log(`[jobs] catalog built by sync ${syncedVersion() ?? "(unknown)"}, current ${SYNC_VERSION} → re-syncing`);
   const stale =
     !artist?.last_synced_at ||
+    outdated ||
     (hours > 0 && Date.now() - Date.parse(artist.last_synced_at + "Z") > hours * 3_600_000);
   if (stale) setTimeout(() => void syncArtist(), 2_000);
 
