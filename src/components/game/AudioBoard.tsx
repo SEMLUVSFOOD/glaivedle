@@ -83,8 +83,15 @@ export function AudioBoard({ round }: { round: RoundView }) {
         className="relative block aspect-video w-full max-w-2xl overflow-hidden bg-ink text-left"
         aria-label={playing ? "Pause" : `Play ${limit} seconds`}
       >
-        <span className="absolute inset-0 grid place-items-center">
-          <span className="caption text-[clamp(56px,18vw,120px)] font-bold text-[#3a3a3a] tabular-nums">
+        <span className="absolute inset-x-0 top-0 bottom-12 flex flex-col items-center justify-center gap-[clamp(8px,2.5vw,16px)]">
+          <span
+            className={`grid size-[clamp(64px,20vw,96px)] place-items-center rounded-full transition-transform duration-150 active:scale-95 ${
+              failed || !ready ? "bg-[#2a2a2a] text-[#5a5a5a]" : "bg-white text-ink"
+            }`}
+          >
+            <PlayIcon playing={playing} />
+          </span>
+          <span className="caption text-[clamp(28px,8vw,44px)] font-bold text-[#5a5a5a] tabular-nums">
             {fmt(playing ? pos : round.finished ? 30 : limit)}
           </span>
         </span>
@@ -95,17 +102,8 @@ export function AudioBoard({ round }: { round: RoundView }) {
           {!round.finished &&
             clips.map((c) => <span key={c} className="absolute -top-1 h-[11px] w-px bg-[#444]" style={{ left: `${(c / scale) * 100}%` }} />)}
         </span>
-        <span className="small absolute bottom-3 left-3 flex items-center gap-1.5 text-white">
-          {failed ? (
-            "Preview unavailable"
-          ) : !ready ? (
-            "Loading…"
-          ) : (
-            <>
-              <PlayIcon playing={playing} />
-              {playing ? "Pause" : "Play"}
-            </>
-          )}
+        <span className="small absolute bottom-3 left-3 text-white">
+          {failed ? "Preview unavailable" : !ready ? "Loading…" : playing ? "Playing" : "Tap to play"}
         </span>
         <span className="small absolute right-3 bottom-3 text-[#9a9a9a]">
           {round.finished ? "Full preview" : `${limit}s unlocked`}
@@ -118,7 +116,7 @@ export function AudioBoard({ round }: { round: RoundView }) {
 /** Drawn icon instead of ▶ / ❚❚ characters, which iOS renders as coloured emoji. */
 function PlayIcon({ playing }: { playing: boolean }) {
   return (
-    <svg viewBox="0 0 10 10" width="10" height="10" aria-hidden className="flex-none fill-current">
+    <svg viewBox="0 0 10 10" aria-hidden className={`size-[40%] flex-none fill-current ${playing ? "" : "translate-x-[6%]"}`}>
       {playing ? (
         <>
           <rect x="1.5" y="1" width="2.5" height="8" />
