@@ -6,7 +6,7 @@ import { normTitle } from "@/lib/normalize";
 import { ListenButton } from "./Listen";
 import { Segmented } from "./ui";
 
-type Pool = "all" | "released" | "unreleased";
+type Pool = "all" | "released" | "unreleased" | "ovinehall";
 type Sort = "az" | "new" | "old" | "project";
 
 const SORTS: { value: Sort; label: string }[] = [
@@ -38,7 +38,7 @@ export function SongDatabase() {
   }, []);
 
   const counts = useMemo(() => {
-    const c = { all: 0, released: 0, unreleased: 0 } as Record<Pool, number>;
+    const c = { all: 0, released: 0, unreleased: 0, ovinehall: 0 } as Record<Pool, number>;
     for (const s of songs ?? []) {
       c.all++;
       c[s.pool]++;
@@ -146,6 +146,7 @@ export function SongDatabase() {
               { value: "all", label: "All", tag: counts.all },
               { value: "released", label: "Released", tag: counts.released },
               { value: "unreleased", label: "Unreleased", tag: counts.unreleased },
+              { value: "ovinehall", label: "ovine hall", tag: counts.ovinehall },
             ]}
           />
         </div>
@@ -234,7 +235,7 @@ function Row({ s, open, onToggle, grouped }: { s: CatalogSong; open: boolean; on
           <img src={s.cover} alt="" loading="lazy" className="size-11 object-cover" />
         ) : (
           <span className="caption grid size-11 place-items-center bg-faint text-[10px] text-soft" aria-hidden>
-            {s.pool === "unreleased" ? "LEAK" : "—"}
+            {s.pool === "unreleased" ? "LEAK" : s.pool === "ovinehall" ? "OH" : "—"}
           </span>
         )}
         <span className="min-w-0">
@@ -248,7 +249,7 @@ function Row({ s, open, onToggle, grouped }: { s: CatalogSong; open: boolean; on
           </span>
         </span>
         <span className="caption text-[10px] text-soft" aria-hidden>
-          {s.pool === "unreleased" ? <span className="text-bad">UNREL</span> : open ? "–" : "+"}
+          {s.pool === "unreleased" ? <span className="text-bad">UNREL</span> : s.pool === "ovinehall" ? "OH" : open ? "–" : "+"}
         </span>
       </button>
       {open && (
@@ -283,6 +284,7 @@ function Row({ s, open, onToggle, grouped }: { s: CatalogSong; open: boolean; on
           <dd className="text-fg-hover">
             {["Classic", s.lyrics && "Lyrics", s.audio && "Audio"].filter(Boolean).join(", ")}
             {s.pool === "unreleased" && " (Unreleased pool)"}
+            {s.pool === "ovinehall" && " (ovine hall switch)"}
           </dd>
           <dt className="self-center">Listen</dt>
           <dd>

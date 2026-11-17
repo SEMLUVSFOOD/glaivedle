@@ -4,12 +4,12 @@ import type { Mode, Option } from "@/lib/game/types";
 import { useApp } from "../Providers";
 
 const cache = new Map<string, Promise<Option[]>>();
-function fetchOptions(mode: Mode, hard: boolean, noAlias: boolean) {
-  const key = `${mode}:${hard}:${noAlias}`;
+function fetchOptions(mode: Mode, hard: boolean, alias: boolean) {
+  const key = `${mode}:${hard}:${alias}`;
   if (!cache.has(key)) {
     cache.set(
       key,
-      fetch(`/api/options?mode=${mode}&hard=${hard ? 1 : 0}${noAlias ? "&alias=0" : ""}`)
+      fetch(`/api/options?mode=${mode}&hard=${hard ? 1 : 0}&alias=${alias ? 1 : 0}`)
         .then((r) => r.json())
         .catch(() => {
           cache.delete(key);
@@ -47,7 +47,7 @@ export function GuessInput({
   skipLabel?: string;
 }) {
   const { covers, ovine } = useApp();
-  const noAlias = hard && !ovine;
+
   const [options, setOptions] = useState<Option[]>([]);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -58,11 +58,11 @@ export function GuessInput({
 
   useEffect(() => {
     let alive = true;
-    fetchOptions(mode, hard, noAlias).then((o) => alive && setOptions(o));
+    fetchOptions(mode, hard, ovine).then((o) => alive && setOptions(o));
     return () => {
       alive = false;
     };
-  }, [mode, hard, noAlias]);
+  }, [mode, hard, ovine]);
 
   const matches = useMemo(() => {
     const nq = norm(q);

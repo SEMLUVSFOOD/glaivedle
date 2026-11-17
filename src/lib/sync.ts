@@ -339,7 +339,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
     applyLeaks(songs, LEAKS);
     say(`Leaks: ${LEAKS.length} curated leaked songs applied`);
 
-    // ── 3c. Alias projects (e.g. ovine hall): released under another name → unreleased pool ──
+    // ── 3c. Alias projects (e.g. ovine hall): released under another name → own switch in the game ──
     for (const alias of env.aliasArtists) {
       try {
         const aliasAlbums = (await deezer.artistAlbums(alias.deezerId)).filter((a) => !isVariantTitle(a.title));
@@ -381,7 +381,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
             n++;
           }
         }
-        say(`Alias ${alias.name}: ${aliasAlbums.length} releases, ${n} songs (unreleased pool)`);
+        say(`Alias ${alias.name}: ${aliasAlbums.length} releases, ${n} songs (ovine hall switch)`);
       } catch (e) {
         say(`Alias ${alias.name} failed: ${(e as Error).message}`);
       }

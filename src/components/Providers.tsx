@@ -20,7 +20,7 @@ type Ctx = {
   setHard: (v: boolean) => void;
   covers: boolean;
   setCovers: (v: boolean) => void;
-  /** include alias projects (ovine hall) in the unreleased pool */
+  /** include glaive's alias ovine hall – independent of the released / unreleased switch */
   ovine: boolean;
   setOvine: (v: boolean) => void;
   openDialog: (name: DialogName) => void;
@@ -70,7 +70,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [meta, setMeta] = useState<Meta | null>(null);
   const hard = useStored<boolean>("hard", false);
   const covers = useStored<boolean>("covers", true);
-  const ovine = useStored<boolean>("ovine", true);
+  const ovine = useStored<boolean>("ovine", false);
   const [dialog, setDialog] = useState<Ctx["dialog"]>(null);
 
   useEffect(() => {

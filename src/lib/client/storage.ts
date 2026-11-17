@@ -26,13 +26,17 @@ export type SavedRound = { round: RoundView; guesses: GuessEntry[]; streak?: Str
 
 const diff = (hard: boolean) => (hard ? "hard" : "normal");
 
-/** Rounds and endless unlocks also depend on the ovine hall switch (it changes the unreleased pool). */
-const variant = (hard: boolean, ovine: boolean) => (hard && !ovine ? "hard-noalias" : diff(hard));
+/**
+ * Rounds and endless unlocks depend on both switches: unreleased songs and ovine hall.
+ * ("normal" and "hard" keep their old meaning so saved games survive.)
+ */
+const variant = (hard: boolean, ovine: boolean) =>
+  hard ? (ovine ? "hard" : "hard-noalias") : ovine ? "normal-ovine" : "normal";
 
-export const roundKey = (mode: Mode, hard: boolean, kind: Kind, date: string | null, ovine = true) =>
+export const roundKey = (mode: Mode, hard: boolean, kind: Kind, date: string | null, ovine: boolean) =>
   `round:${mode}:${variant(hard, ovine)}:${kind === "endless" ? "endless" : date}`;
 
-export const proofKey = (mode: Mode, hard: boolean, ovine = true) => `proof:${mode}:${variant(hard, ovine)}`;
+export const proofKey = (mode: Mode, hard: boolean, ovine: boolean) => `proof:${mode}:${variant(hard, ovine)}`;
 
 // ── Stats & streaks ─────────────────────────────────────────────────────
 //

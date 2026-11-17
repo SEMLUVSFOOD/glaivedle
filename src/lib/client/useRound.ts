@@ -47,7 +47,7 @@ export function useRound(mode: Mode, kind: Kind, archiveDate: string | null) {
       post<RoundView>("/api/round/start", {
         mode,
         hard,
-        noAlias: hard && !ovine,
+        alias: ovine,
         kind,
         date: kind === "archive" ? date : undefined,
         proof: kind === "endless" ? load<{ proof: string } | null>(proofKey(mode, hard, ovine), null)?.proof : undefined,

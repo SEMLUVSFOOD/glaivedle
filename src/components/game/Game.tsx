@@ -60,7 +60,9 @@ export function Game({ mode }: { mode: Mode }) {
         </h1>
         <div className="small shrink-0 pt-1 text-right">
           <p>{kind === "endless" ? "∞ rounds" : date ? shortDate(date) : ""}</p>
-          {hard && <p className="text-fg-hover">+ Unreleased{ovine ? "" : ", no ovine hall"}</p>}
+          {(hard || ovine) && (
+            <p className="text-fg-hover">{[hard && "+ Unreleased", ovine && "+ ovine hall"].filter(Boolean).join(" ")}</p>
+          )}
           <p>
             <StreakTag mode={mode} track={kind} />
           </p>

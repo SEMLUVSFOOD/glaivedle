@@ -110,31 +110,48 @@ function releaseById(artistId: number, id: number): ReleaseRow | null {
 
 /** Songs that can be *guessed* (autocomplete) for a difficulty. */
 /**
- * Song pool id, also stored in daily_puzzles.hard / plays.hard:
- * 0 = released, 1 = unreleased (incl. alias projects like ovine hall), 2 = unreleased without alias projects.
+ * Song pool id, also stored in daily_puzzles.hard / plays.hard. Two independent switches:
+ * unreleased songs (leaks + features) and alias projects (ovine hall).
+ *   0 = released            1 = unreleased + ovine hall
+ *   2 = unreleased          3 = released + ovine hall
+ * (0–2 keep their meaning from before ovine hall became its own switch.)
  */
-export type PoolId = 0 | 1 | 2;
-export const poolId = (hard: boolean, noAlias = false): PoolId => (hard ? (noAlias ? 2 : 1) : 0);
+export type PoolId = 0 | 1 | 2 | 3;
+export const poolId = (hard: boolean, alias: boolean): PoolId => (hard ? (alias ? 1 : 2) : alias ? 3 : 0);
 
-function guessableSongs(artistId: number, hard: boolean, noAlias = false): SongRow[] {
+/** Is a song part of the pool for these switches? */
+function inPool(s: SongRow, hard: boolean, alias: boolean): boolean {
+  if (isAlias(s)) return alias;
+  return hard || (!s.unreleased && !s.is_feature);
+}
+
+function guessableSongs(artistId: number, hard: boolean, alias: boolean): SongRow[] {
+  const aliasSql = "(r.type IS NOT NULL AND r.type = 'alias')";
+  const where = hard
+    ? alias
+      ? ""
+      : `AND NOT ${aliasSql}`
+    : `AND ((s.unreleased = 0 AND s.is_feature = 0 AND NOT ${aliasSql})${alias ? ` OR ${aliasSql}` : ""})`;
   return db()
-    .prepare(
-      `${SONG_SELECT} WHERE s.artist_id = ? AND s.enabled = 1 ${hard ? "" : "AND s.unreleased = 0 AND s.is_feature = 0"}
-       ${noAlias ? "AND (r.type IS NULL OR r.type != 'alias')" : ""}
-       ORDER BY s.title COLLATE NOCASE`,
-    )
+    .prepare(`${SONG_SELECT} WHERE s.artist_id = ? AND s.enabled = 1 ${where} ORDER BY s.title COLLATE NOCASE`)
     .all(artistId) as SongRow[];
 }
 
 /** Releases for cover mode, deduped by title and identical artwork. */
-function coverReleases(artistId: number, hard: boolean, noAlias = false): ReleaseRow[] {
+function coverReleases(artistId: number, hard: boolean, alias: boolean): ReleaseRow[] {
   const rows = db()
     .prepare(
       `SELECT id, title, type, release_date, cover_url, deezer_id FROM releases
        WHERE artist_id = ? AND enabled = 1 AND cover_url IS NOT NULL
-       ${hard ? "" : `AND type NOT IN ('feature', 'unreleased', 'alias')
-         AND NOT EXISTS (SELECT 1 FROM songs s WHERE s.release_id = releases.id AND s.unreleased = 1)`}
-       ${noAlias ? "AND type != 'alias'" : ""}
+       ${
+         hard
+           ? alias
+             ? ""
+             : "AND type != 'alias'"
+           : `AND ((type NOT IN ('feature', 'unreleased', 'alias')
+               AND NOT EXISTS (SELECT 1 FROM songs s WHERE s.release_id = releases.id AND s.unreleased = 1))
+               ${alias ? "OR type = 'alias'" : ""})`
+       }
        ORDER BY CASE type WHEN 'album' THEN 0 WHEN 'ep' THEN 1 WHEN 'single' THEN 2 ELSE 3 END, release_date`,
     )
     .all(artistId) as ReleaseRow[];
@@ -153,9 +170,9 @@ function coverReleases(artistId: number, hard: boolean, noAlias = false): Releas
 /** Deezer cover URLs embed an md5 of the artwork; same md5 = same image. */
 const coverKey = (url: string | null) => url?.match(/\/cover\/([0-9a-f]{32})\//)?.[1] ?? url ?? "";
 
-function answerPool(artistId: number, mode: Mode, hard: boolean, noAlias = false): number[] {
-  if (mode === "cover") return coverReleases(artistId, hard, noAlias).map((r) => r.id);
-  return guessableSongs(artistId, hard, noAlias)
+function answerPool(artistId: number, mode: Mode, hard: boolean, alias: boolean): number[] {
+  if (mode === "cover") return coverReleases(artistId, hard, alias).map((r) => r.id);
+  return guessableSongs(artistId, hard, alias)
     .filter((s) => {
       if (mode === "lyrics") return !!s.lyrics && s.lyrics.split("\n").filter(Boolean).length >= 6;
       if (mode === "audio") return !!s.has_preview && !!s.deezer_id;
@@ -164,9 +181,9 @@ function answerPool(artistId: number, mode: Mode, hard: boolean, noAlias = false
     .map((s) => s.id);
 }
 
-export function options(artistId: number, mode: Mode, hard: boolean, noAlias = false): Option[] {
+export function options(artistId: number, mode: Mode, hard: boolean, alias: boolean): Option[] {
   if (mode === "cover") {
-    return coverReleases(artistId, hard, noAlias).map((r) => ({
+    return coverReleases(artistId, hard, alias).map((r) => ({
       id: r.id,
       title: r.title,
       sub: typeLabel(r.type),
@@ -174,7 +191,7 @@ export function options(artistId: number, mode: Mode, hard: boolean, noAlias = f
       year: r.release_date?.slice(0, 4) ?? null,
     }));
   }
-  return guessableSongs(artistId, hard, noAlias).map((s) => ({
+  return guessableSongs(artistId, hard, alias).map((s) => ({
     id: s.id,
     title: s.title,
     sub: isAlias(s)
@@ -190,7 +207,7 @@ export function options(artistId: number, mode: Mode, hard: boolean, noAlias = f
 
 /** Every playable song, for the public database page. Never says which song is today's answer. */
 export function catalog(artistId: number): CatalogSong[] {
-  return guessableSongs(artistId, true).map((s) => {
+  return guessableSongs(artistId, true, true).map((s) => {
     const type = songType(s);
     return {
       id: s.id,
@@ -198,7 +215,7 @@ export function catalog(artistId: number): CatalogSong[] {
       project: projectOf(s),
       type,
       typeLabel: typeLabel(type),
-      pool: s.unreleased || s.is_feature ? "unreleased" : "released",
+      pool: isAlias(s) ? "ovinehall" : s.unreleased || s.is_feature ? "unreleased" : "released",
       date: s.release_date,
       duration: s.duration,
       track: s.unreleased && !isAlias(s) ? null : s.track_number,
@@ -266,13 +283,13 @@ function answerInfo(artistId: number, mode: Mode, id: number): AnswerInfo | unde
 
 // ── Daily selection ─────────────────────────────────────────────────────
 
-export function dailyAnswer(artistId: number, mode: Mode, hard: boolean, date: string, noAlias = false): number | null {
+export function dailyAnswer(artistId: number, mode: Mode, hard: boolean, date: string, alias: boolean): number | null {
   const d = db();
-  const pid = poolId(hard, noAlias);
+  const pid = poolId(hard, alias);
   const existing = d
     .prepare("SELECT answer_id FROM daily_puzzles WHERE artist_id = ? AND mode = ? AND hard = ? AND date = ?")
     .get(artistId, mode, pid, date) as { answer_id: number } | undefined;
-  const pool = answerPool(artistId, mode, hard, pid === 2);
+  const pool = answerPool(artistId, mode, hard, alias);
   if (existing) {
     // a song can drop out of the pool after it was picked (reclassified as a leak, disabled by an admin…):
     // then pick again instead of serving e.g. an unreleased song in normal mode
@@ -298,11 +315,11 @@ export function dailyAnswer(artistId: number, mode: Mode, hard: boolean, date: s
   );
   const candidates = pool.filter((id) => !recent.has(id));
   const list = candidates.length ? candidates : pool;
-  const pick = list[Math.floor(rng(hashString(`${env.appSecret}:${artistId}:${mode}:${hard}${pid === 2 ? ":noalias" : ""}:${date}`))() * list.length)];
+  const pick = list[Math.floor(rng(hashString(`${env.appSecret}:${artistId}:${mode}:${hard}${pid === 2 ? ":noalias" : pid === 3 ? ":alias" : ""}:${date}`))() * list.length)];
   d.prepare(
     "INSERT OR IGNORE INTO daily_puzzles (artist_id, mode, hard, date, answer_id) VALUES (?, ?, ?, ?, ?)",
   ).run(artistId, mode, pid, date, pick);
-  return dailyAnswer(artistId, mode, hard, date, noAlias);
+  return dailyAnswer(artistId, mode, hard, date, alias);
 }
 
 // ── Round tokens ────────────────────────────────────────────────────────
@@ -320,22 +337,24 @@ type RoundToken = {
   w: 0 | 1; // won
   s: number; // seed for lyric line selection
   g: number[]; // guessed ids (prevents duplicate guesses)
-  o?: 1; // unreleased pool without alias projects (ovine hall off)
+  al?: 0 | 1; // alias projects (ovine hall) included
+  o?: 1; // legacy (before ovine hall had its own switch): unreleased pool without alias projects
 };
 
-type ProofToken = { a: number; m: Mode; h: 0 | 1; d: string; o?: 1 };
+type ProofToken = { a: number; m: Mode; h: 0 | 1; d: string; al?: 0 | 1; o?: 1 };
+
+/** Alias switch of a token; older tokens only knew "unreleased without ovine hall" (o). */
+const aliasOf = (t: { h: 0 | 1; al?: 0 | 1; o?: 1 }) => (t.al !== undefined ? t.al === 1 : t.h === 1 && !t.o);
 
 export function readToken(token: string): RoundToken | null {
   const t = unseal<RoundToken>(token);
   return t && t.v === 1 ? t : null;
 }
 
-export function verifyProof(proof: unknown, artistId: number, mode: Mode, hard: boolean, noAlias = false): boolean {
+export function verifyProof(proof: unknown, artistId: number, mode: Mode, hard: boolean, alias: boolean): boolean {
   if (typeof proof !== "string") return false;
   const p = unseal<ProofToken>(proof, "proof");
-  return (
-    !!p && p.a === artistId && p.m === mode && p.h === (hard ? 1 : 0) && !!p.o === (hard && noAlias) && p.d === today()
-  );
+  return !!p && p.a === artistId && p.m === mode && p.h === (hard ? 1 : 0) && aliasOf(p) === alias && p.d === today();
 }
 
 function view(t: RoundToken): RoundView {
@@ -371,14 +390,14 @@ function view(t: RoundToken): RoundView {
 
   if (finished) {
     round.answer = answerInfo(t.a, t.m, t.x);
-    if (t.k === "daily" && t.d) round.proof = seal({ a: t.a, m: t.m, h: t.h, d: t.d, ...(t.o ? { o: 1 as const } : {}) } satisfies ProofToken, "proof");
+    if (t.k === "daily" && t.d) round.proof = seal({ a: t.a, m: t.m, h: t.h, d: t.d, al: aliasOf(t) ? 1 : 0 } satisfies ProofToken, "proof");
     if (t.d && t.k !== "endless") {
       round.solvers = (
         db()
           .prepare(
             "SELECT COUNT(*) AS c FROM plays WHERE artist_id = ? AND mode = ? AND hard = ? AND date = ? AND won = 1 AND kind = 'daily'",
           )
-          .get(t.a, t.m, poolId(!!t.h, !!t.o), t.d) as { c: number }
+          .get(t.a, t.m, poolId(!!t.h, aliasOf(t)), t.d) as { c: number }
       ).c;
     }
   }
@@ -388,7 +407,8 @@ function view(t: RoundToken): RoundView {
 export type StartInput = {
   mode: Mode;
   hard: boolean;
-  noAlias?: boolean;
+  /** include alias projects (ovine hall) */
+  alias: boolean;
   kind: Kind;
   date?: string;
   exclude?: number[];
@@ -396,15 +416,15 @@ export type StartInput = {
 };
 
 export function startRound(artist: ArtistRow, input: StartInput): RoundView | { error: string; status: number } {
-  const noAlias = input.hard && !!input.noAlias;
+  const alias = input.alias;
   let answer: number | null = null;
   let date: string | null = null;
 
   if (input.kind === "endless") {
-    if (!verifyProof(input.proof, artist.id, input.mode, input.hard, noAlias)) {
+    if (!verifyProof(input.proof, artist.id, input.mode, input.hard, alias)) {
       return { error: "Finish today's daily first to unlock endless mode.", status: 403 };
     }
-    const pool = answerPool(artist.id, input.mode, input.hard, noAlias);
+    const pool = answerPool(artist.id, input.mode, input.hard, alias);
     const exclude = new Set(input.exclude ?? []);
     const list = pool.filter((id) => !exclude.has(id));
     const from = list.length ? list : pool;
@@ -412,7 +432,7 @@ export function startRound(artist: ArtistRow, input: StartInput): RoundView | { 
   } else {
     date = input.kind === "daily" ? today() : (input.date ?? "");
     if (!isPlayableDate(date)) return { error: "That puzzle isn't available.", status: 400 };
-    answer = dailyAnswer(artist.id, input.mode, input.hard, date, noAlias);
+    answer = dailyAnswer(artist.id, input.mode, input.hard, date, alias);
   }
   if (answer === null) return { error: "No songs available for this mode yet — try again soon.", status: 503 };
 
@@ -421,7 +441,7 @@ export function startRound(artist: ArtistRow, input: StartInput): RoundView | { 
     a: artist.id,
     m: input.mode,
     h: input.hard ? 1 : 0,
-    ...(noAlias ? { o: 1 as const } : {}),
+    al: alias ? 1 : 0,
     k: input.kind,
     d: date,
     x: answer,
@@ -457,8 +477,7 @@ export function guess(token: string, guessId: number | null): { entry: GuessEntr
       entry = { id: r.id, title: r.title, cover: null, correct };
     } else {
       const s = songById(t.a, guessId);
-      const outOfPool = (!t.h && (s?.unreleased || s?.is_feature)) || (t.o && s && isAlias(s));
-      if (!s || (outOfPool && s.id !== t.x)) return { error: "Unknown song.", status: 400 };
+      if (!s || (!inPool(s, !!t.h, aliasOf(t)) && s.id !== t.x)) return { error: "Unknown song.", status: 400 };
       entry = { id: s.id, title: s.title, cover: s.r_cover ?? s.cover_url, correct };
       if (t.m === "classic") {
         const answer = songById(t.a, t.x);
@@ -479,7 +498,7 @@ export function guess(token: string, guessId: number | null): { entry: GuessEntr
   if (t.f) {
     db()
       .prepare("INSERT INTO plays (artist_id, mode, hard, kind, date, won, guesses) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .run(t.a, t.m, poolId(!!t.h, !!t.o), t.k, t.d, t.w, t.n + (t.w ? 1 : 0));
+      .run(t.a, t.m, poolId(!!t.h, aliasOf(t)), t.k, t.d, t.w, t.n + (t.w ? 1 : 0));
   }
   return { entry, round: view(t) };
 }

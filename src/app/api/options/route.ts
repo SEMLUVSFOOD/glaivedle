@@ -7,7 +7,10 @@ export async function GET(req: Request) {
   if (!isMode(mode)) return Response.json({ error: "Bad mode" }, { status: 400 });
   const artist = getArtist();
   if (!artist) return Response.json([]);
-  return Response.json(options(artist.id, mode, params.get("hard") === "1", params.get("alias") === "0"), {
+  const hard = params.get("hard") === "1";
+  // alias=1/0 switches ovine hall; without it, keep the old default (only in the unreleased pool)
+  const alias = params.has("alias") ? params.get("alias") === "1" : hard;
+  return Response.json(options(artist.id, mode, hard, alias), {
     headers: { "Cache-Control": "public, max-age=300" },
   });
 }

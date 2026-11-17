@@ -81,7 +81,7 @@ export type CatalogSong = {
   project: string;
   type: string;
   typeLabel: string;
-  pool: "released" | "unreleased";
+  pool: "released" | "unreleased" | "ovinehall";
   date: string | null;
   duration: number | null;
   track: number | null;
