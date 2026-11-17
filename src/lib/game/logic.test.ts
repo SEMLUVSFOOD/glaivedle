@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { clipSeconds, compareClassic, compareSets, coverBlocks, type ClassicSong, selectLyricLines } from "./logic";
-import { featuresFromTitle, isVariantTitle, normTitle, stripFeatures } from "../normalize";
+import { cleanUploadTitle, featuresFromTitle, isVariantTitle, normTitle, stripFeatures } from "../normalize";
 import { sliceMp3 } from "../media-slice";
 
 const base: ClassicSong = {
@@ -74,6 +74,20 @@ describe("normalisation", () => {
   });
   it("extracts features from titles", () => {
     expect(featuresFromTitle("MENTAL (feat. Slump6s & glaive)")).toEqual(["Slump6s", "glaive"]);
+  });
+});
+
+describe("cleanUploadTitle", () => {
+  const names = ["glaive", "ovine hall"];
+  it("strips artist prefixes, video tags and version tags", () => {
+    expect(cleanUploadTitle("glaive - astrid (official video)", names)).toEqual({ title: "astrid", versioned: false });
+    expect(cleanUploadTitle("bastard (v4.1)", names)).toEqual({ title: "bastard", versioned: true });
+    expect(cleanUploadTitle("i wish i could but my mom would kill me (cut)", names)).toEqual({
+      title: "i wish i could but my mom would kill me",
+      versioned: true,
+    });
+    expect(cleanUploadTitle("pissed (p. delto)", names).title).toBe("pissed");
+    expect(cleanUploadTitle("heather (feat. ericdoa) (demo)", names)).toEqual({ title: "heather (feat. ericdoa)", versioned: true });
   });
 });
 

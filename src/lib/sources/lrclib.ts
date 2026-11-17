@@ -39,3 +39,35 @@ export async function lyricsFor(artist: string, title: string, album?: string | 
   );
   return candidates[0]?.plainLyrics ?? null;
 }
+
+export type LrcHit = { trackName: string; artistName: string; albumName: string | null; duration: number | null; lyrics: string };
+
+/**
+ * Sweeps LRCLIB for everything uploaded under an artist (search caps at 20 hits per query,
+ * so we fan out over title prefixes, keywords and "<release> (Sessions)" album names).
+ */
+export async function discover(artist: string, releaseTitles: string[]): Promise<LrcHit[]> {
+  const queries: Record<string, string>[] = [];
+  for (const c of "abcdefghijklmnopqrstuvwxyz0123456789") queries.push({ artist_name: artist, track_name: c });
+  for (const w of ["sessions", "unreleased", "leak", "demo", "v1", "v2", "v3", "cut", "og", "ref", "unnamed", "snippet"]) {
+    queries.push({ q: `${artist} ${w}` });
+  }
+  for (const r of releaseTitles) queries.push({ artist_name: artist, album_name: `${r} (Sessions)` });
+  for (const a of ["unreleased", "unnamed", "sessions", "leaks"]) queries.push({ artist_name: artist, album_name: a });
+
+  const out = new Map<string, LrcHit>();
+  for (const q of queries) {
+    const hits = (await fetchJson<LrcRecord[]>(`${API}/search?${new URLSearchParams(q)}`, { minGapMs: 220 }).catch(() => null)) ?? [];
+    for (const h of hits) {
+      if (!usable(h) || !h.artistName.toLowerCase().includes(artist.toLowerCase())) continue;
+      out.set(`${h.artistName}|${h.trackName}|${h.albumName}`.toLowerCase(), {
+        trackName: h.trackName,
+        artistName: h.artistName,
+        albumName: h.albumName,
+        duration: h.duration,
+        lyrics: h.plainLyrics,
+      });
+    }
+  }
+  return [...out.values()];
+}

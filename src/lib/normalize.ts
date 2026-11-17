@@ -48,3 +48,26 @@ export function uniqueNames(names: string[]): string[] {
   }
   return [...seen.values()];
 }
+
+const VERSION_TAG_RE =
+  /\s*[([](?:v\d+(?:\.\d+)*|demo|cut|ref\s*\d*|paused|explicit|og|snippet|cdq|leak(?:ed)?|unreleased|alt(?:ernate)?|early|rough|p\.\s[^)\]]*|prod\.?[^)\]]*)[)\]]/gi;
+
+/**
+ * Cleans fan-uploaded titles ("glaive - bastard (v4.1)", "prick (v12.3)", "x (demo)") down to the song name.
+ * Returns whether a version/demo tag was present (a strong hint the upload is unreleased material).
+ */
+export function cleanUploadTitle(title: string, artistNames: string[]): { title: string; versioned: boolean } {
+  let t = title;
+  for (const a of artistNames) {
+    t = t.replace(new RegExp(`^\\s*${a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*[-–—:]\\s*`, "i"), "");
+  }
+  t = t.replace(/\s*[([](?:official\s+)?(?:music\s+|lyric\s+)?(?:video|audio|visualizer)[)\]]/gi, "");
+  t = t.replace(/\s*-\s*spotify singles?$/i, "");
+  const dashTag = /\s+[-–]\s*(?:demo|v\d+(?:\.\d+)*|leak(?:ed)?|snippet|og|unreleased|ref\s*\d*)\s*$/i;
+  let versioned = dashTag.test(t);
+  t = t.replace(dashTag, "");
+  versioned = VERSION_TAG_RE.test(t) || versioned;
+  VERSION_TAG_RE.lastIndex = 0;
+  t = t.replace(VERSION_TAG_RE, "");
+  return { title: t.replace(/\s{2,}/g, " ").trim(), versioned };
+}
