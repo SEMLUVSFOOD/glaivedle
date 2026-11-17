@@ -26,7 +26,7 @@ function shortDate(d: string) {
 
 export function Game({ mode }: { mode: Mode }) {
   const params = useSearchParams();
-  const { meta } = useApp();
+  const { meta, ovine } = useApp();
   const d = params.get("d");
   const kind: Kind = params.get("endless") ? "endless" : d && meta && d !== meta.today ? "archive" : "daily";
   const { status, saved, error, busy, guess, restart, hard } = useRound(mode, kind, d);
@@ -60,7 +60,7 @@ export function Game({ mode }: { mode: Mode }) {
         </h1>
         <div className="small shrink-0 pt-1 text-right">
           <p>{kind === "endless" ? "∞ rounds" : date ? shortDate(date) : ""}</p>
-          {hard && <p className="text-fg-hover">+ Unreleased</p>}
+          {hard && <p className="text-fg-hover">+ Unreleased{ovine ? "" : ", no ovine hall"}</p>}
           <p>
             <StreakTag mode={mode} track={kind} />
           </p>

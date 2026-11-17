@@ -20,6 +20,9 @@ type Ctx = {
   setHard: (v: boolean) => void;
   covers: boolean;
   setCovers: (v: boolean) => void;
+  /** include alias projects (ovine hall) in the unreleased pool */
+  ovine: boolean;
+  setOvine: (v: boolean) => void;
   openDialog: (name: DialogName) => void;
   dialog: DialogName | null;
   closeDialog: () => void;
@@ -67,6 +70,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [meta, setMeta] = useState<Meta | null>(null);
   const hard = useStored<boolean>("hard", false);
   const covers = useStored<boolean>("covers", true);
+  const ovine = useStored<boolean>("ovine", true);
   const [dialog, setDialog] = useState<Ctx["dialog"]>(null);
 
   useEffect(() => {
@@ -104,10 +108,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const setHard = useCallback((v: boolean) => save("hard", v), []);
   const setCovers = useCallback((v: boolean) => save("covers", v), []);
+  const setOvine = useCallback((v: boolean) => save("ovine", v), []);
   const closeDialog = useCallback(() => setDialog(null), []);
 
   return (
-    <AppCtx.Provider value={{ meta, hard, setHard, covers, setCovers, dialog, openDialog: setDialog, closeDialog }}>
+    <AppCtx.Provider value={{ meta, hard, setHard, covers, setCovers, ovine, setOvine, dialog, openDialog: setDialog, closeDialog }}>
       {children}
     </AppCtx.Provider>
   );

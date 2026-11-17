@@ -19,6 +19,8 @@ A fan-made, open-source -dle game in the spirit of Wordle, loldle and Hitster. F
 - 🗂 **Archive** — play every past day
 - ♾ **Endless** — unlocks per mode once you've finished that day's daily
 - 💀 **Released / Unreleased** — the "Unreleased" song pool (hard mode) adds leaks, unreleased songs and features, shorter audio clips, colourless covers; separate dailies and stats
+- 🎧 **Listen anywhere** — after a round (or in the database) pick your platform in the app: Spotify, Apple Music,
+  YouTube (Music), Deezer, SoundCloud, TIDAL, Amazon Music; remember a default in Settings
 - 🗃 **Database** (`/database`) — every song in the game, searchable and filterable (released / unreleased, type), with
   details per song; built for phones
 - 🛠 **Admin center** (`/admin`) — catalog stats, plays, today's answers, sync log, artist requests and song toggles
@@ -39,7 +41,7 @@ at midnight (no admin action needed) and never repeat within ~60 days.
 - **Deezer search fallback** — Deezer's artist endpoint leaves out some releases (e.g. the _then i'll be happy_ EP
   and the 2020 singles), so the sync also searches for albums and features credited to the artist
 - **Alias projects** (`ALIAS_ARTISTS`, default glaive's throwaway alias _ovine hall_) — released under another name, so
-  they join the unreleased pool with audio previews and covers
+  they join the unreleased pool with audio previews and covers; players can switch ovine hall on/off
 - **Curated leaks** (`src/lib/leaks.ts`) — 64 leaked glaive songs compiled from the community tracker
   [unreleased.world](https://www.unreleased.world/glaive), grouped by era. They're added to hard mode, and any synced song
   with a matching title is forced to unreleased (so leaks never show up in normal mode).

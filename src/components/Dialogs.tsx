@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { type Track, TRACKS } from "@/lib/client/storage";
-import { MODE_INFO, MODES, type Mode } from "@/lib/game/types";
+import { MODE_INFO, MODES, type Mode, PLATFORM_LABEL } from "@/lib/game/types";
+import { PLATFORM_CHOICES, usePlatform } from "./Listen";
 import { useApp } from "./Providers";
 import { TRACK_INFO, useDayStreaks, useStreak } from "./Streaks";
 import { POOL_HINT, POOL_LABEL, PoolSwitch, Segmented, Switch } from "./ui";
@@ -90,7 +91,7 @@ function HelpBody() {
 }
 
 function SettingsBody() {
-  const { hard, setHard, covers, setCovers } = useApp();
+  const { hard, setHard, covers, setCovers, ovine, setOvine } = useApp();
   return (
     <div className="space-y-7">
       <section className="space-y-3">
@@ -104,10 +105,27 @@ function SettingsBody() {
             <span className="text-fg-hover">{POOL_LABEL.normal}</span> – {POOL_HINT.normal}. 1s audio intro, full-colour covers.
           </li>
           <li className={hard ? "text-fg-hover" : ""}>
-            <span className="text-fg-hover">{POOL_LABEL.hard}</span> – {POOL_HINT.hard}. The hard way to play.
+            <span className="text-fg-hover">{POOL_LABEL.hard}</span> – {POOL_HINT.hard}, plus ovine hall if you want. The hard way to play.
           </li>
         </ul>
         <p className="small text-soft">Each pool has its own dailies, stats and streaks – switching never resets anything.</p>
+      </section>
+
+      <ListenSetting />
+
+      <section className={`flex items-start justify-between gap-6 ${hard ? "" : "opacity-60"}`}>
+        <div>
+          <h3 className="nav-link mb-2 flex items-center gap-2">
+            ovine hall
+            <span className="sq" />
+          </h3>
+          <p className="small">
+            Songs glaive put out under his alias ovine hall. Part of the unreleased pool – turn off to play unreleased without
+            them (that gets its own daily).
+            {!hard && <span className="text-fg-hover"> Only applies with unreleased songs on.</span>}
+          </p>
+        </div>
+        <Switch checked={ovine} onChange={setOvine} label="Include ovine hall songs" />
       </section>
 
       <section className="flex items-start justify-between gap-6">
@@ -217,6 +235,32 @@ function ModeStats({ mode, hard, track }: { mode: Mode; hard: boolean; track: Tr
           })}
         </div>
       )}
+    </section>
+  );
+}
+
+function ListenSetting() {
+  const [pref, setPref] = usePlatform();
+  return (
+    <section className="space-y-3">
+      <h3 className="nav-link flex items-center gap-2">
+        Listen on
+        <span className="sq" />
+      </h3>
+      <p className="small">Where the Listen button takes you after a round or in the database.</p>
+      <div className="flex flex-wrap gap-1.5">
+        {(["ask", ...PLATFORM_CHOICES] as const).map((k) => (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={pref === k}
+            onClick={() => setPref(k)}
+            className={`small rounded-full border border-fg px-3 py-1 ${pref === k ? "bg-fg text-bg" : "hoverable"}`}
+          >
+            {k === "ask" ? "Ask every time" : PLATFORM_LABEL[k]}
+          </button>
+        ))}
+      </div>
     </section>
   );
 }

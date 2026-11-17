@@ -6,6 +6,7 @@ import { rateLimit, tooMany } from "@/lib/ratelimit";
 const Body = z.object({
   mode: z.enum(MODES),
   hard: z.boolean().default(false),
+  noAlias: z.boolean().default(false),
   kind: z.enum(["daily", "archive", "endless"]),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   exclude: z.array(z.number().int()).max(200).optional(),

@@ -94,3 +94,20 @@ export function PoolSwitch({ hard, onChange, className }: { hard: boolean; onCha
     />
   );
 }
+
+/** On/off chip for alias projects (ovine hall) in the unreleased pool. */
+export function OvineToggle({ on, onChange, disabled }: { on: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      disabled={disabled}
+      onClick={() => onChange(!on)}
+      title={disabled ? "ovine hall songs are part of the unreleased pool" : on ? "ovine hall songs included" : "ovine hall songs left out"}
+      className={`seg-item border border-fg ${on && !disabled ? "bg-fg text-bg" : "hoverable"} ${disabled ? "opacity-45" : ""}`}
+    >
+      ovine hall
+      <sup className="caption">[{disabled ? "–" : on ? "on" : "off"}]</sup>
+    </button>
+  );
+}

@@ -10,8 +10,8 @@ import { useDayStreaks, useStreak } from "./Streaks";
 const pad = (n: number) => String(n).padStart(3, "0");
 
 export function useDailyStatus(mode: Mode) {
-  const { meta, hard } = useApp();
-  const saved = useStored<SavedRound | null>(roundKey(mode, hard, "daily", meta?.today ?? "x"), null);
+  const { meta, hard, ovine } = useApp();
+  const saved = useStored<SavedRound | null>(roundKey(mode, hard, "daily", meta?.today ?? "x", ovine), null);
   const r = saved?.round;
   if (r?.finished) return { tag: r.won ? String(saved!.guesses.length) : "x", label: r.won ? `Solved in ${saved!.guesses.length}` : "Missed", done: true };
   if (saved?.guesses.length) return { tag: "…", label: "In progress", done: false };

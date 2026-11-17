@@ -29,12 +29,12 @@ const isValid = (s: SavedRound | null, mode: Mode, hard: boolean): s is SavedRou
  * (so progress survives reloads) and is read reactively.
  */
 export function useRound(mode: Mode, kind: Kind, archiveDate: string | null) {
-  const { meta, hard } = useApp();
+  const { meta, hard, ovine } = useApp();
   const date = kind === "daily" ? (meta?.today ?? null) : kind === "archive" ? archiveDate : null;
-  const key = meta && (kind === "endless" || date) ? roundKey(mode, hard, kind, date) : null;
+  const key = meta && (kind === "endless" || date) ? roundKey(mode, hard, kind, date, ovine) : null;
 
   const stored = useStored<SavedRound | null>(key ?? "none", null);
-  const proof = useStored<{ date: string; proof: string } | null>(proofKey(mode, hard), null);
+  const proof = useStored<{ date: string; proof: string } | null>(proofKey(mode, hard, ovine), null);
   const [error, setError] = useState<{ key: string; msg: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -47,12 +47,13 @@ export function useRound(mode: Mode, kind: Kind, archiveDate: string | null) {
       post<RoundView>("/api/round/start", {
         mode,
         hard,
+        noAlias: hard && !ovine,
         kind,
         date: kind === "archive" ? date : undefined,
-        proof: kind === "endless" ? load<{ proof: string } | null>(proofKey(mode, hard), null)?.proof : undefined,
+        proof: kind === "endless" ? load<{ proof: string } | null>(proofKey(mode, hard, ovine), null)?.proof : undefined,
         exclude: kind === "endless" ? load<number[]>(recentKey(mode, hard), []) : undefined,
       }),
-    [mode, hard, kind, date],
+    [mode, hard, ovine, kind, date],
   );
 
   useEffect(() => {
@@ -89,7 +90,7 @@ export function useRound(mode: Mode, kind: Kind, archiveDate: string | null) {
           const n = next.guesses.length;
           if (r.kind === "daily" && r.date) {
             next.streak = recordDaily(mode, hard, r.date, r.won, n);
-            if (r.proof) save(proofKey(mode, hard), { date: r.date, proof: r.proof });
+            if (r.proof) save(proofKey(mode, hard, ovine), { date: r.date, proof: r.proof });
           } else if (r.kind === "archive" && r.date) {
             next.streak = recordArchive(mode, hard, r.date, r.won, n);
           } else if (r.kind === "endless") {
@@ -109,7 +110,7 @@ export function useRound(mode: Mode, kind: Kind, archiveDate: string | null) {
         setBusy(false);
       }
     },
-    [key, saved, busy, mode, hard],
+    [key, saved, busy, mode, hard, ovine],
   );
 
   const err = error && error.key === key ? error.msg : null;

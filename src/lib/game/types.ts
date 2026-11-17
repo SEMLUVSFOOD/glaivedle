@@ -93,3 +93,32 @@ export type CatalogSong = {
   deezerUrl: string | null;
   geniusUrl: string | null;
 };
+
+export type PlatformKey =
+  | "spotify"
+  | "apple"
+  | "youtubemusic"
+  | "youtube"
+  | "deezer"
+  | "soundcloud"
+  | "tidal"
+  | "amazon"
+  | "genius"
+  | "tracker";
+
+/** One "listen on" option; direct = links straight to the song, otherwise a search on that platform. */
+export type Platform = { key: PlatformKey; url: string; direct: boolean };
+export type ListenLinks = { title: string; artist: string; platforms: Platform[] };
+
+export const PLATFORM_LABEL: Record<PlatformKey, string> = {
+  spotify: "Spotify",
+  apple: "Apple Music",
+  youtubemusic: "YouTube Music",
+  youtube: "YouTube",
+  deezer: "Deezer",
+  soundcloud: "SoundCloud",
+  tidal: "TIDAL",
+  amazon: "Amazon Music",
+  genius: "Genius",
+  tracker: "Leak tracker",
+};

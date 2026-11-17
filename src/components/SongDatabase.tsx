@@ -3,6 +3,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { fmtDuration } from "@/lib/game/logic";
 import type { CatalogSong } from "@/lib/game/types";
 import { normTitle } from "@/lib/normalize";
+import { ListenButton } from "./Listen";
 import { Segmented } from "./ui";
 
 type Pool = "all" | "released" | "unreleased";
@@ -283,23 +284,10 @@ function Row({ s, open, onToggle, grouped }: { s: CatalogSong; open: boolean; on
             {["Classic", s.lyrics && "Lyrics", s.audio && "Audio"].filter(Boolean).join(", ")}
             {s.pool === "unreleased" && " (Unreleased pool)"}
           </dd>
-          {(s.deezerUrl || s.geniusUrl) && (
-            <>
-              <dt>Listen</dt>
-              <dd className="flex gap-4">
-                {s.deezerUrl && (
-                  <a href={s.deezerUrl} target="_blank" rel="noopener noreferrer">
-                    Deezer →
-                  </a>
-                )}
-                {s.geniusUrl && (
-                  <a href={s.geniusUrl} target="_blank" rel="noopener noreferrer">
-                    Genius →
-                  </a>
-                )}
-              </dd>
-            </>
-          )}
+          <dt className="self-center">Listen</dt>
+          <dd>
+            <ListenButton song={s.id} className="hoverable text-fg-hover underline underline-offset-4" />
+          </dd>
         </dl>
       )}
     </li>

@@ -121,6 +121,17 @@ const MIGRATIONS: { id: number; sql: string }[] = [
       ALTER TABLE songs ADD COLUMN era TEXT;
     `,
   },
+  {
+    id: 4,
+    sql: /* sql */ `
+      -- looked-up streaming links (e.g. Apple Music via the iTunes Search API); url NULL = not found
+      CREATE TABLE listen_cache (
+        key         TEXT PRIMARY KEY,
+        url         TEXT,
+        fetched_at  TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+    `,
+  },
 ];
 
 declare global {

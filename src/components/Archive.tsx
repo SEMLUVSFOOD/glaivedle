@@ -8,9 +8,9 @@ import { useStreak } from "./Streaks";
 import { PoolSwitch } from "./ui";
 
 function Cell({ mode, date }: { mode: Mode; date: string }) {
-  const { hard, meta } = useApp();
+  const { hard, ovine, meta } = useApp();
   const kind = date === meta?.today ? "daily" : "archive";
-  const saved = useStored<SavedRound | null>(roundKey(mode, hard, kind, date), null);
+  const saved = useStored<SavedRound | null>(roundKey(mode, hard, kind, date, ovine), null);
   const r = saved?.round;
   const state = r?.finished ? (r.won ? "won" : "lost") : "open";
   return (

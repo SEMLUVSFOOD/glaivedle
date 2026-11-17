@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - `/database`: every song in the game, searchable and filterable, built for phones.
 - 64 curated leaked songs (from unreleased.world), grouped by era, in the unreleased pool.
 - ovine hall (glaive's alias, `ALIAS_ARTISTS`): 19 songs with audio and covers in the unreleased pool.
+- ovine hall on/off switch (game pages and Settings) for the unreleased pool; turning it off gives its own daily.
+- "Listen" button after every round and in the database: pick Spotify, Apple Music, YouTube Music, YouTube, Deezer,
+  SoundCloud, TIDAL or Amazon Music in the app, optionally remembered as your default (Settings → Listen on).
+  Apple Music links go straight to the track (iTunes Search API, cached); leaks get YouTube / SoundCloud searches.
 - Catalog sync finds releases Deezer's artist endpoint leaves out (the _then i'll be happy_ EP, 2020 singles) and
   three times as many features.
 

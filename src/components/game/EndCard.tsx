@@ -6,6 +6,7 @@ import { shareText } from "@/lib/client/share";
 import { MODE_INFO, MODES, type GuessEntry, type RoundView } from "@/lib/game/types";
 import { type StreakResult } from "@/lib/client/storage";
 import { Countdown } from "../Countdown";
+import { ListenButton } from "../Listen";
 import { TRACK_INFO, useDayStreaks, useStreak } from "../Streaks";
 import { useApp } from "../Providers";
 
@@ -20,7 +21,7 @@ export function EndCard({
   streak?: StreakResult;
   onNextEndless: () => void;
 }) {
-  const { meta, hard } = useApp();
+  const { meta, hard, ovine } = useApp();
   const [copied, setCopied] = useState(false);
   const a = round.answer;
   const live = useStreak(round.mode, round.kind);
@@ -44,7 +45,7 @@ export function EndCard({
   };
 
   const nextMode =
-    meta && MODES.find((m) => m !== round.mode && !load<SavedRound | null>(roundKey(m, hard, "daily", meta.today), null)?.round.finished);
+    meta && MODES.find((m) => m !== round.mode && !load<SavedRound | null>(roundKey(m, hard, "daily", meta.today, ovine), null)?.round.finished);
 
   const verdict = round.won ? (guesses.length === 1 ? "first try, blessed" : `got it in ${guesses.length}`) : "not this time";
 
@@ -86,19 +87,18 @@ export function EndCard({
             </dd>
           </>
         )}
-        <dt>Listen</dt>
-        <dd className="flex gap-4">
-          {a?.deezerUrl && (
-            <a href={a.deezerUrl} target="_blank" rel="noopener noreferrer">
-              Deezer →
-            </a>
-          )}
-          {a?.geniusUrl && (
-            <a href={a.geniusUrl} target="_blank" rel="noopener noreferrer">
-              Genius →
-            </a>
-          )}
-        </dd>
+        {a && (
+          <>
+            <dt className="self-center">Listen</dt>
+            <dd>
+              <ListenButton
+                {...(round.mode === "cover" ? { release: a.id } : { song: a.id })}
+                label="Listen"
+                className="hoverable text-fg-hover underline underline-offset-4"
+              />
+            </dd>
+          </>
+        )}
       </dl>
 
       <div className="grid gap-2 sm:grid-cols-2">
