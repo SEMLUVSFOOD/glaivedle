@@ -35,7 +35,7 @@ function Item({
 }
 
 export function Header() {
-  const { hard, openDialog, dialog, meta } = useApp();
+  const { openDialog, dialog, meta } = useApp();
   const path = usePathname();
   return (
     <header className="flex items-start justify-between gap-2 px-[calc(var(--margin)-6px)] pt-[max(14px,env(safe-area-inset-top))] pb-6 sm:pb-12">
@@ -52,8 +52,7 @@ export function Header() {
         <Item
           onClick={() => openDialog("settings")}
           selected={dialog === "settings"}
-          count={hard ? "hard" : undefined}
-          title="Difficulty and display settings"
+          title="Song pool (released / unreleased) and display settings"
         >
           Settings
         </Item>

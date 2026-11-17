@@ -14,11 +14,11 @@ A fan-made, open-source -dle game in the spirit of Wordle, loldle and Hitster. F
 - 📅 **Daily** puzzles (same for everyone, resets at midnight Europe/Amsterdam), stats and emoji sharing
 - 🔥 **Streaks everywhere** — every mode has a daily streak (days in a row), an endless streak (rounds in a row) and an
   archive streak, per difficulty, plus a cross-mode day streak and an "all 4 won" streak
-- 🎛 **Quick switches** — Daily / Endless / Archive and Normal / Hard toggles on every game page, a Settings dialog and
+- 🎛 **Quick switches** — Daily / Endless / Archive and Released / Unreleased toggles on every game page, a Settings dialog and
   a filterable Stats dialog
 - 🗂 **Archive** — play every past day
 - ♾ **Endless** — unlocks per mode once you've finished that day's daily
-- 💀 **Hard mode** — adds leaks, unreleased songs and features, shorter audio clips, colourless covers; separate dailies and stats
+- 💀 **Released / Unreleased** — the "Unreleased" song pool (hard mode) adds leaks, unreleased songs and features, shorter audio clips, colourless covers; separate dailies and stats
 - 🛠 **Admin center** (`/admin`) — catalog stats, plays, today's answers, sync log, artist requests and song toggles
 - ✨ **Suggest an artist** — requests (with vote counting) land in the admin center
 - 🖼 **Covers toggle** — hide album art while guessing

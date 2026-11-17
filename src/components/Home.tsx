@@ -104,7 +104,7 @@ export function Home() {
             {today
               ? today.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" })
               : " "}
-            {hard && " – hard"}
+            {hard && " – incl. unreleased"}
           </span>
           <DayStreakLine />
           <span className="flex items-center gap-2">

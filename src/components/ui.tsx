@@ -71,3 +71,26 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
     <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className="switch" />
   );
 }
+
+/** What the two difficulties are called in the UI (internally still "hard"). */
+export const POOL_LABEL = { normal: "Released", hard: "Unreleased" } as const;
+export const POOL_HINT = {
+  normal: "Only officially released songs from albums, EPs and singles",
+  hard: "Adds leaks, unreleased songs and features – shorter clips, colourless covers",
+} as const;
+
+/** Released | Unreleased switch, shared by the game pages, archive, settings and stats. */
+export function PoolSwitch({ hard, onChange, className }: { hard: boolean; onChange: (hard: boolean) => void; className?: string }) {
+  return (
+    <Segmented<"normal" | "hard">
+      label="Song pool"
+      value={hard ? "hard" : "normal"}
+      onChange={(v) => onChange(v === "hard")}
+      className={className}
+      options={[
+        { value: "normal", label: POOL_LABEL.normal, title: POOL_HINT.normal },
+        { value: "hard", label: POOL_LABEL.hard, title: POOL_HINT.hard },
+      ]}
+    />
+  );
+}

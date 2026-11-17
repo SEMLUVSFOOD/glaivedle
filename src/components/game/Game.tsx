@@ -60,7 +60,7 @@ export function Game({ mode }: { mode: Mode }) {
         </h1>
         <div className="small shrink-0 pt-1 text-right">
           <p>{kind === "endless" ? "∞ rounds" : date ? shortDate(date) : ""}</p>
-          {hard && <p className="text-fg-hover">Hard</p>}
+          {hard && <p className="text-fg-hover">+ Unreleased</p>}
           <p>
             <StreakTag mode={mode} track={kind} />
           </p>
@@ -73,7 +73,7 @@ export function Game({ mode }: { mode: Mode }) {
         <div className="max-w-lg space-y-4">
           <p className="script text-[60px] leading-[0.9]">locked</p>
           <p className="text-[19px] leading-snug tracking-[-0.03em]">
-            Finish today&apos;s {MODE_INFO[mode].title.toLowerCase()} daily{hard ? " on hard" : ""} first, then play as many rounds as
+            Finish today&apos;s {MODE_INFO[mode].title.toLowerCase()} daily{hard ? " with unreleased songs" : ""} first, then play as many rounds as
             you like.
           </p>
           <Link href={`/${mode}`} className="btn btn-fill">

@@ -2,9 +2,9 @@
 import { proofKey } from "@/lib/client/storage";
 import type { Kind, Mode } from "@/lib/game/types";
 import { useApp, useStored } from "../Providers";
-import { Segmented } from "../ui";
+import { PoolSwitch, Segmented } from "../ui";
 
-/** Switch between daily / endless / archive and normal / hard without leaving the mode. */
+/** Switch between daily / endless / archive and released / unreleased songs without leaving the mode. */
 export function PlayBar({ mode, kind }: { mode: Mode; kind: Kind }) {
   const { hard, setHard, meta } = useApp();
   const proof = useStored<{ date: string } | null>(proofKey(mode, hard), null);
@@ -27,15 +27,7 @@ export function PlayBar({ mode, kind }: { mode: Mode; kind: Kind }) {
           { value: "archive", label: "Archive", href: "/archive" },
         ]}
       />
-      <Segmented<"normal" | "hard">
-        label="Difficulty"
-        value={hard ? "hard" : "normal"}
-        onChange={(v) => setHard(v === "hard")}
-        options={[
-          { value: "normal", label: "Normal", title: "Released songs only" },
-          { value: "hard", label: "Hard", title: "Adds leaks, unreleased songs and features; shorter clips, colourless covers" },
-        ]}
-      />
+      <PoolSwitch hard={hard} onChange={setHard} />
     </div>
   );
 }

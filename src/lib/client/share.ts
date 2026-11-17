@@ -6,7 +6,7 @@ export function shareText(round: RoundView, guesses: GuessEntry[], site: string,
     "glaivedle",
     round.kind === "endless" ? "∞" : `#${round.number}`,
     `· ${MODE_INFO[round.mode].title}`,
-    round.hard ? "· 💀 hard" : "",
+    round.hard ? "· 💀 unreleased" : "",
   ]
     .filter(Boolean)
     .join(" ");

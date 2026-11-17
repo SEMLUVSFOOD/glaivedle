@@ -5,7 +5,7 @@ import { addDays, daysBetween } from "@/lib/dates";
 import { MODE_INFO, MODES, type Mode } from "@/lib/game/types";
 import { useApp, useStored } from "./Providers";
 import { useStreak } from "./Streaks";
-import { Segmented } from "./ui";
+import { PoolSwitch } from "./ui";
 
 function Cell({ mode, date }: { mode: Mode; date: string }) {
   const { hard, meta } = useApp();
@@ -31,15 +31,7 @@ function ArchiveBar() {
   const { hard, setHard } = useApp();
   return (
     <div className="space-y-4">
-      <Segmented<"normal" | "hard">
-        label="Difficulty"
-        value={hard ? "hard" : "normal"}
-        onChange={(v) => setHard(v === "hard")}
-        options={[
-          { value: "normal", label: "Normal" },
-          { value: "hard", label: "Hard" },
-        ]}
-      />
+      <PoolSwitch hard={hard} onChange={setHard} />
       <p className="small flex flex-wrap gap-x-5 gap-y-1">
         <span>Archive streaks</span>
         {MODES.map((m) => (

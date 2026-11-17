@@ -4,7 +4,7 @@ import { type Track, TRACKS } from "@/lib/client/storage";
 import { MODE_INFO, MODES, type Mode } from "@/lib/game/types";
 import { useApp } from "./Providers";
 import { TRACK_INFO, useDayStreaks, useStreak } from "./Streaks";
-import { Segmented, Switch } from "./ui";
+import { POOL_HINT, POOL_LABEL, PoolSwitch, Segmented, Switch } from "./ui";
 
 export function Dialogs() {
   const { dialog, closeDialog } = useApp();
@@ -75,12 +75,14 @@ function HelpBody() {
       </div>
       <p className="small">
         <span className="text-fg-hover">Streaks</span> – every mode keeps a daily streak (days in a row solved), an endless streak
-        (rounds in a row) and an archive streak, separately for normal and hard. Your day streak counts the days you finish at
+        (rounds in a row) and an archive streak, separately for released and unreleased. Your day streak counts the days you finish at
         least one daily.
       </p>
       <p className="small">
-        <span className="text-fg-hover">Hard</span> adds leaks, unreleased songs and features, shortens audio clips and drains the
-        colour from covers. It has its own dailies, stats and streaks. Change it and hide album covers in{" "}
+        <span className="text-fg-hover">Released</span> uses only officially released songs.{" "}
+        <span className="text-fg-hover">Unreleased</span> adds leaks, unreleased songs and features, shortens audio clips and
+        drains the colour from covers – the hard way to play. Each has its own dailies, stats and streaks. Switch it and hide album
+        covers in{" "}
         <span className="text-fg-hover">Settings</span>. New puzzles pick themselves at midnight, Amsterdam time.
       </p>
     </div>
@@ -93,27 +95,19 @@ function SettingsBody() {
     <div className="space-y-7">
       <section className="space-y-3">
         <h3 className="nav-link flex items-center gap-2">
-          Difficulty
+          Song pool
           <span className="sq" />
         </h3>
-        <Segmented<"normal" | "hard">
-          label="Difficulty"
-          value={hard ? "hard" : "normal"}
-          onChange={(v) => setHard(v === "hard")}
-          options={[
-            { value: "normal", label: "Normal" },
-            { value: "hard", label: "Hard" },
-          ]}
-        />
+        <PoolSwitch hard={hard} onChange={setHard} />
         <ul className="small space-y-1">
           <li className={hard ? "" : "text-fg-hover"}>
-            <span className="caption">N</span> Released songs from albums, EPs and singles. 1s audio intro, full-colour covers.
+            <span className="text-fg-hover">{POOL_LABEL.normal}</span> – {POOL_HINT.normal}. 1s audio intro, full-colour covers.
           </li>
           <li className={hard ? "text-fg-hover" : ""}>
-            <span className="caption">H</span> Adds leaks, unreleased songs and features. Shorter clips, colourless covers.
+            <span className="text-fg-hover">{POOL_LABEL.hard}</span> – {POOL_HINT.hard}. The hard way to play.
           </li>
         </ul>
-        <p className="small text-soft">Each difficulty has its own dailies, stats and streaks – switching never resets anything.</p>
+        <p className="small text-soft">Each pool has its own dailies, stats and streaks – switching never resets anything.</p>
       </section>
 
       <section className="flex items-start justify-between gap-6">
@@ -143,15 +137,7 @@ function StatsBody() {
           onChange={setTrack}
           options={TRACKS.map((t) => ({ value: t, label: TRACK_INFO[t].title }))}
         />
-        <Segmented<"normal" | "hard">
-          label="Difficulty"
-          value={hard ? "hard" : "normal"}
-          onChange={(v) => setHard(v === "hard")}
-          options={[
-            { value: "normal", label: "Normal" },
-            { value: "hard", label: "Hard" },
-          ]}
-        />
+        <PoolSwitch hard={hard} onChange={setHard} />
       </div>
       {track === "daily" ? <DayStreaks hard={hard} /> : <p className="caption">STREAK = {TRACK_INFO[track].streakHint.toUpperCase()}</p>}
       {MODES.map((m) => (
@@ -211,7 +197,7 @@ function ModeStats({ mode, hard, track }: { mode: Mode; hard: boolean; track: Tr
       </dl>
       {s.played === 0 ? (
         <p className="small text-soft">
-          No {TRACK_INFO[track].title.toLowerCase()} games yet{hard ? " on hard" : ""}.
+          No {TRACK_INFO[track].title.toLowerCase()} games yet{hard ? " with unreleased songs" : ""}.
         </p>
       ) : (
         <div className="space-y-[3px]">
