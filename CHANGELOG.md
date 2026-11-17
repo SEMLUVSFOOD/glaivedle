@@ -5,6 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-18
+
+### Fixed
+
+- Missing releases: Deezer's artist album list skips releases, so it is now merged with a paginated album search.
+  Adds "then i'll be happy" (with ericdoa), "cloak n dagger", "fuck this town", "life is pain", "sick", "clover",
+  "arsenic" and "Asheghanistan" (41 releases instead of 30).
+- Unreleased songs were empty without a Genius token: LRCLIB uploads (sessions/demos/leaks) are now mined,
+  de-duplicated and cross-checked against Deezer, adding songs like "heather"-era demos, "wasting away again",
+  "i wish i could but my mom would kill me" and "two clouds split apart the sun".
+- Released features listed only on LRCLIB are confirmed on Deezer and added as features, never as unreleased.
+
+### Added
+
+- Alias artists: ovine hall's releases count as glaive releases ("ovine hall EP/Single" type).
+- Deployments re-sync automatically when the sync logic changes (`SYNC_VERSION`), and failed lyric lookups are retried.
+
 ## [0.3.0] - 2026-11-17
 
 ### Added
@@ -53,7 +70,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - glaive "God Save The Three" theme, mobile-first layout.
 - Docker image, Docker Compose file and Coolify instructions; health endpoint.
 
-[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/SEMLUVSFOOD/glaivedle/releases/tag/v0.1.0
