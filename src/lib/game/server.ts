@@ -66,19 +66,34 @@ type SongRow = {
   r_title: string | null;
   r_type: string | null;
   r_cover: string | null;
+  r_artist: string | null;
 };
 
 const SONG_SELECT = `
-  SELECT s.*, r.title AS r_title, r.type AS r_type, r.cover_url AS r_cover
+  SELECT s.*, r.title AS r_title, r.type AS r_type, r.cover_url AS r_cover, r.artist_name AS r_artist
   FROM songs s LEFT JOIN releases r ON r.id = s.release_id`;
 
-type ReleaseRow = { id: number; title: string; type: string; release_date: string | null; cover_url: string | null; deezer_id: string | null };
+type ReleaseRow = {
+  id: number;
+  title: string;
+  type: string;
+  release_date: string | null;
+  cover_url: string | null;
+  deezer_id: string | null;
+  artist_name: string | null;
+};
 
-function songType(s: SongRow): string {
-  if (s.unreleased) return "unreleased";
-  if (s.is_feature) return "feature";
-  return s.r_type ?? "single";
+const RELEASE_COLS = "id, title, type, release_date, cover_url, deezer_id, artist_name";
+
+/** Display type, e.g. "Album", "Unreleased", or "ovine hall EP" for alias releases. */
+function songTypeLabel(s: SongRow): string {
+  if (s.unreleased) return "Unreleased";
+  if (s.is_feature) return "Feature";
+  const base = typeLabel(s.r_type ?? "single");
+  return s.r_artist ? `${s.r_artist} ${base}` : base;
 }
+
+const releaseTypeLabel = (r: ReleaseRow) => (r.artist_name ? `${r.artist_name} ${typeLabel(r.type)}` : typeLabel(r.type));
 
 function songById(artistId: number, id: number): SongRow | null {
   return (db().prepare(`${SONG_SELECT} WHERE s.artist_id = ? AND s.id = ?`).get(artistId, id) as SongRow) ?? null;
@@ -87,7 +102,7 @@ function songById(artistId: number, id: number): SongRow | null {
 function releaseById(artistId: number, id: number): ReleaseRow | null {
   return (
     (db()
-      .prepare("SELECT id, title, type, release_date, cover_url, deezer_id FROM releases WHERE artist_id = ? AND id = ?")
+      .prepare(`SELECT ${RELEASE_COLS} FROM releases WHERE artist_id = ? AND id = ?`)
       .get(artistId, id) as ReleaseRow) ?? null
   );
 }
@@ -106,7 +121,7 @@ function guessableSongs(artistId: number, hard: boolean): SongRow[] {
 function coverReleases(artistId: number, hard: boolean): ReleaseRow[] {
   const rows = db()
     .prepare(
-      `SELECT id, title, type, release_date, cover_url, deezer_id FROM releases
+      `SELECT ${RELEASE_COLS} FROM releases
        WHERE artist_id = ? AND enabled = 1 AND cover_url IS NOT NULL
        ${hard ? "" : `AND type NOT IN ('feature', 'unreleased')
          AND NOT EXISTS (SELECT 1 FROM songs s WHERE s.release_id = releases.id AND s.unreleased = 1)`}
@@ -144,7 +159,7 @@ export function options(artistId: number, mode: Mode, hard: boolean): Option[] {
     return coverReleases(artistId, hard).map((r) => ({
       id: r.id,
       title: r.title,
-      sub: typeLabel(r.type),
+      sub: releaseTypeLabel(r),
       cover: null, // never leak artwork in cover mode
       year: r.release_date?.slice(0, 4) ?? null,
     }));
@@ -152,7 +167,7 @@ export function options(artistId: number, mode: Mode, hard: boolean): Option[] {
   return guessableSongs(artistId, hard).map((s) => ({
     id: s.id,
     title: s.title,
-    sub: s.unreleased ? "Unreleased" : (s.r_title ?? "Single"),
+    sub: s.unreleased ? "Unreleased" : s.r_artist ? `${s.r_artist} – ${s.r_title}` : (s.r_title ?? "Single"),
     cover: s.r_cover ?? s.cover_url,
     year: s.release_date?.slice(0, 4) ?? null,
   }));
@@ -163,7 +178,7 @@ function toClassic(s: SongRow): ClassicSong {
     id: s.id,
     releaseId: s.unreleased ? null : s.release_id,
     project: s.unreleased ? "Unreleased" : (s.r_title ?? "—"),
-    type: songType(s),
+    type: songTypeLabel(s),
     year: s.release_date ? Number(s.release_date.slice(0, 4)) : null,
     collaborators: JSON.parse(s.collaborators),
     producers: JSON.parse(s.producers),
@@ -188,7 +203,7 @@ function answerInfo(artistId: number, mode: Mode, id: number): AnswerInfo | unde
       id: r.id,
       title: r.title,
       project: r.title,
-      type: typeLabel(r.type),
+      type: releaseTypeLabel(r),
       year: r.release_date?.slice(0, 4) ?? null,
       cover: r.cover_url,
       deezerUrl: r.deezer_id && /^\d+$/.test(r.deezer_id) ? `https://www.deezer.com/album/${r.deezer_id}` : null,
@@ -201,7 +216,7 @@ function answerInfo(artistId: number, mode: Mode, id: number): AnswerInfo | unde
     id: s.id,
     title: s.title,
     project: s.unreleased ? "Unreleased" : (s.r_title ?? "Single"),
-    type: typeLabel(songType(s)),
+    type: songTypeLabel(s),
     year: s.release_date?.slice(0, 4) ?? null,
     cover: s.r_cover ?? s.cover_url,
     deezerUrl: s.deezer_id ? `https://www.deezer.com/track/${s.deezer_id}` : null,

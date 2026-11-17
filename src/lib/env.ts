@@ -34,6 +34,11 @@ export const env = {
     "DATABASE_PATH",
     process.env.NODE_ENV === "production" ? "./data/glaivedle.db" : path.join(os.homedir(), ".glaivedle", "glaivedle.db"),
   ),
+  /** Deezer ids of the artist's aliases / side projects whose releases count as their own (glaive → ovine hall). */
+  aliasDeezerIds: str("ARTIST_ALIAS_DEEZER_IDS", "213958057")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => /^\d+$/.test(s)),
   /** Distributor labels whose uploads are leaks/unofficial → treated as unreleased (hard mode). */
   unreleasedLabels: str("UNRELEASED_LABELS", "Too Lost")
     .split(",")

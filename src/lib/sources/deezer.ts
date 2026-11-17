@@ -66,7 +66,35 @@ export async function findArtist(nameOrId: string): Promise<DzArtist | null> {
 export const artistAlbums = (artistId: string | number) =>
   all<DzAlbumSummary>(`/artist/${artistId}/albums?limit=100`);
 
-export const album = (albumId: string | number) => dz<{ id: number; label?: string }>(`/album/${albumId}`);
+export type DzAlbum = {
+  id: number;
+  title: string;
+  label?: string;
+  release_date?: string;
+  record_type?: string;
+  cover_xl?: string;
+  cover_big?: string;
+  artist?: { id: number; name: string };
+};
+
+export const album = (albumId: string | number) => dz<DzAlbum>(`/album/${albumId}`);
+
+/**
+ * Every release credited to an artist. Deezer's /artist/{id}/albums silently misses releases
+ * (e.g. glaive's "then i'll be happy", "cloak n dagger", early singles), so union it with a
+ * paginated album search filtered on the artist id.
+ */
+export async function allReleaseIds(artistId: number, name: string): Promise<number[]> {
+  const ids = new Set<number>((await artistAlbums(artistId)).filter((a) => a.record_type !== "compile").map((a) => a.id));
+  for (let index = 0; index < 400; index += 100) {
+    const page = await dz<DzPage<DzAlbumSummary & { artist: { id: number } }>>(
+      `/search/album?q=${encodeURIComponent(`artist:"${name}"`)}&limit=100&index=${index}`,
+    );
+    for (const a of page.data) if (a.artist?.id === artistId && a.record_type !== "compile") ids.add(a.id);
+    if (!page.next || page.data.length === 0) break;
+  }
+  return [...ids];
+}
 
 export const albumTracks = (albumId: string | number) =>
   all<DzTrackSummary>(`/album/${albumId}/tracks?limit=100`);
@@ -91,6 +119,21 @@ export async function featuredOn(artist: DzArtist): Promise<DzTrack[]> {
     }
   }
   return out;
+}
+
+/**
+ * Is this title a released track that credits the artist (e.g. a feature on someone else's song)?
+ * Used to keep released features from being mistaken for unreleased uploads.
+ */
+export async function findCreditedTrack(title: string, artist: DzArtist, selfIds: Set<number>): Promise<DzTrack | null> {
+  const res = await dz<DzPage<DzTrackSummary>>(`/search/track?q=${encodeURIComponent(`${title} ${artist.name}`)}&limit=10`);
+  const want = title.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  for (const t of res.data.slice(0, 6)) {
+    if (!t.title.toLowerCase().replace(/[^a-z0-9]+/g, "").includes(want)) continue;
+    const full = await track(t.id).catch(() => null);
+    if (full?.contributors?.some((c) => selfIds.has(c.id))) return full;
+  }
+  return null;
 }
 
 /** Preview URLs are signed and expire, so always resolve a fresh one. */

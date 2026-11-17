@@ -114,6 +114,15 @@ const MIGRATIONS: { id: number; sql: string }[] = [
       ALTER TABLE releases ADD COLUMN label TEXT;
     `,
   },
+  {
+    id: 3,
+    sql: /* sql */ `
+      CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
+      -- credited artist when it's an alias/side project (e.g. "ovine hall")
+      ALTER TABLE releases ADD COLUMN artist_name TEXT;
+      ALTER TABLE songs ADD COLUMN source TEXT;  -- deezer | genius | lrclib
+    `,
+  },
 ];
 
 declare global {
