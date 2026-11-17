@@ -9,17 +9,17 @@ function Tab({ mode, active }: { mode: Mode; active: boolean }) {
     <Link
       href={`/${mode}`}
       aria-current={active ? "page" : undefined}
-      className={`nav-link inline-flex shrink-0 items-start rounded-[10px] px-1.5 py-1 no-underline sm:px-2 ${active ? "pill" : "hoverable"}`}
+      className={`nav-link inline-flex shrink-0 items-start rounded-[10px] px-1 py-1 text-[clamp(16px,4.7vw,28px)]! no-underline sm:px-2 ${active ? "pill" : "hoverable"}`}
     >
       <span className={active ? "" : "u"}>{MODE_INFO[mode].title}</span>
-      <sup className="caption">[{s.tag}]</sup>
+      <sup className="caption ml-[0.15em]! text-[11px]! sm:ml-[0.3em]! sm:text-[12.5px]!">[{s.tag}]</sup>
     </Link>
   );
 }
 
 export function ModeTabs({ current }: { current: Mode }) {
   return (
-    <nav className="no-scrollbar -mx-1.5 mb-8 flex gap-x-1 overflow-x-auto sm:mb-12 sm:gap-x-6" aria-label="Game modes">
+    <nav className="no-scrollbar -mx-1 mb-8 flex justify-between gap-x-0.5 overflow-x-auto sm:mb-12 sm:justify-start sm:gap-x-6" aria-label="Game modes">
       {MODES.map((m) => (
         <Tab key={m} mode={m} active={m === current} />
       ))}

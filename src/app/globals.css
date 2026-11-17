@@ -253,6 +253,16 @@ a {
       font-size: 13px;
     }
   }
+  /* fluid variant: fills its grid cell so the whole row fits any screen */
+  .tile-fluid {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    padding: 2px;
+    font-size: clamp(8.5px, 2.3vw, 13px);
+    letter-spacing: -0.04em;
+    hyphens: auto;
+  }
   .tile-correct {
     background: var(--ok);
   }
