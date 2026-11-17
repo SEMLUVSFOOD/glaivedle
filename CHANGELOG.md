@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-17
+
+### Changed
+
+- Complete redesign after glaivemusic.com and the _God Save The Three_ era: flat grey palette, tightly tracked
+  Helvetica Neue, P22 Zaner Four script, Doto dot-matrix captions, underlined links, grey "selected" pills,
+  raw cover collage on the home page, tour-list style rows, black video-player style audio mode.
+- Icon library removed in favour of type, arrows and 4px square markers.
+
+### Added
+
+- "Covers" toggle in the header to hide album art in the guess list and classic tiles.
+- Optional `ADOBE_FONTS_KIT` for licensed Helvetica Neue LT Pro.
+- NOTICE file documenting third-party font licensing.
+
 ## [0.1.0] - 2026-11-17
 
 ### Added
@@ -19,5 +34,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - glaive "God Save The Three" theme, mobile-first layout.
 - Docker image, Docker Compose file and Coolify instructions; health endpoint.
 
-[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/SEMLUVSFOOD/glaivedle/releases/tag/v0.1.0

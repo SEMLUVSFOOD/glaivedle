@@ -17,7 +17,8 @@ A fan-made, open-source -dle game in the spirit of Wordle, loldle and Hitster. F
 - 💀 **Hard mode** — adds unreleased songs and features, shorter audio clips, colourless covers; separate dailies and stats
 - 🛠 **Admin center** (`/admin`) — catalog stats, plays, today's answers, sync log, artist requests and song toggles
 - ✨ **Suggest an artist** — requests (with vote counting) land in the admin center
-- 📱 Mobile-first, styled after glaive's latest album _God Save The Three_
+- 🖼 **Covers toggle** — hide album art while guessing
+- 📱 Mobile-first, styled after [glaivemusic.com](https://www.glaivemusic.com) and _God Save The Three_
 
 Answers never reach the browser: rounds are AES-GCM sealed tokens, audio is sliced server-side to the unlocked
 length and covers are pixelated server-side.
@@ -80,6 +81,23 @@ The same file works anywhere with `docker compose up -d`.
 | `LAUNCH_DATE`         |          | `2026-11-17`           | Day of puzzle #1 (archive starts here)                    |
 | `SYNC_INTERVAL_HOURS` |          | `24`                   | Catalog re-sync interval (`0` disables)                   |
 | `DATABASE_PATH`       |          | `/data/glaivedle.db`   | SQLite file location                                      |
+| `ADOBE_FONTS_KIT`     |          | —                      | Adobe Fonts kit id for Helvetica Neue LT Pro (build-time) |
+
+## Design & fonts
+
+The look follows glaivemusic.com and the _God Save The Three_ era: flat `#d5d5d5` / `#757575`, tightly tracked
+Helvetica Neue, dot-matrix captions, underlined links and raw imagery.
+
+| Role       | Font                                                                    |
+| ---------- | ----------------------------------------------------------------------- |
+| Text       | Helvetica Neue (system on Apple, or via `ADOBE_FONTS_KIT`), Inter Tight fallback |
+| Script     | **P22 Zaner Four** (`public/fonts/`), Pinyon Script fallback            |
+| Captions   | Doto (dot matrix, OFL)                                                   |
+| Accents    | Times New Roman italic (system)                                          |
+
+> **P22 Zaner Four is a commercial font licensed to the site owner. It is _not_ covered by the AGPL-3.0 licence of
+> this repository.** If you fork or self-host glaivedle, buy your own licence from P22 or delete
+> `public/fonts/P22ZanerFour.woff2` — the site falls back to Pinyon Script automatically.
 
 ## Multiple artists
 
@@ -100,8 +118,9 @@ git push --follow-tags
 
 ## License
 
-[AGPL-3.0](LICENSE) © Sem Sannen — [semsannen.com](https://semsannen.com).
+Code: [AGPL-3.0](LICENSE) © Sem Sannen — [semsannen.com](https://semsannen.com).
 If you host a modified version, you must publish your source code too.
+Third-party fonts keep their own licences (see [Design & fonts](#design--fonts) and [NOTICE](NOTICE)).
 
 glaivedle is a fan project and is not affiliated with glaive, any label, Deezer, LRCLIB or Genius.
 Song metadata, artwork, previews and lyrics belong to their respective owners.

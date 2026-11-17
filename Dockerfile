@@ -21,8 +21,10 @@ COPY . .
 # Coolify passes SOURCE_COMMIT when "Include Source Commit in Build" is enabled
 ARG SOURCE_COMMIT=""
 ARG PUBLIC_URL="https://glaivedle.lol"
+ARG ADOBE_FONTS_KIT=""
 ENV SOURCE_COMMIT=$SOURCE_COMMIT \
-    PUBLIC_URL=$PUBLIC_URL
+    PUBLIC_URL=$PUBLIC_URL \
+    ADOBE_FONTS_KIT=$ADOBE_FONTS_KIT
 RUN pnpm build
 
 # ── runtime ───────────────────────────────────────────────────────────────
