@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-18
+
+### Fixed
+
+- The live catalog never picked up v0.4.0's sync improvements (ovine hall, the _then i'll be happy_ EP, curated
+  leaks): a deploy only re-synced after the 24h interval. The catalog now records which sync logic built it
+  (`SYNC_VERSION`) and re-syncs on boot when that changes. Failed lyric lookups are retried after such an upgrade.
+
 ## [0.4.0] - 2026-11-17
 
 ### Added
@@ -79,7 +87,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - glaive "God Save The Three" theme, mobile-first layout.
 - Docker image, Docker Compose file and Coolify instructions; health endpoint.
 
-[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.1.0...v0.2.0

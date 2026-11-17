@@ -35,6 +35,7 @@ length and covers are pixelated server-side.
 
 Everything is synced automatically (on first boot and every `SYNC_INTERVAL_HOURS`). Daily answers pick themselves
 at midnight (no admin action needed) and never repeat within ~60 days.
+Whenever the sync logic changes (`SYNC_VERSION` in `src/lib/sync.ts`), the next deploy re-syncs on boot.
 
 - **[Deezer API](https://developers.deezer.com/api)** — discography, track numbers, durations, release dates, collaborators, cover art and 30s previews (no key needed)
 - **[LRCLIB](https://lrclib.net)** — lyrics (open database, no key needed)
