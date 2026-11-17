@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "../db";
 import { env } from "../env";
 import { seal, unseal } from "../crypto";
+import { eraLabel } from "../leaks";
 import { addDays, dateInTz, daysBetween } from "../dates";
 import {
   type ClassicSong,
@@ -63,6 +64,7 @@ type SongRow = {
   has_preview: number;
   unreleased: number;
   is_feature: number;
+  era: string | null;
   r_title: string | null;
   r_type: string | null;
   r_cover: string | null;
@@ -78,6 +80,12 @@ function songType(s: SongRow): string {
   if (s.unreleased) return "unreleased";
   if (s.is_feature) return "feature";
   return s.r_type ?? "single";
+}
+
+/** What a song's "project" is called: its release, or its leak era for unreleased songs. */
+function projectOf(s: SongRow): string {
+  if (s.unreleased) return eraLabel(s.era) ?? "Unreleased";
+  return s.r_title ?? "Single";
 }
 
 function songById(artistId: number, id: number): SongRow | null {
@@ -152,7 +160,7 @@ export function options(artistId: number, mode: Mode, hard: boolean): Option[] {
   return guessableSongs(artistId, hard).map((s) => ({
     id: s.id,
     title: s.title,
-    sub: s.unreleased ? "Unreleased" : (s.r_title ?? "Single"),
+    sub: s.unreleased ? `Unreleased · ${eraLabel(s.era) ?? "leak"}` : (s.r_title ?? "Single"),
     cover: s.r_cover ?? s.cover_url,
     year: s.release_date?.slice(0, 4) ?? null,
   }));
@@ -162,7 +170,7 @@ function toClassic(s: SongRow): ClassicSong {
   return {
     id: s.id,
     releaseId: s.unreleased ? null : s.release_id,
-    project: s.unreleased ? "Unreleased" : (s.r_title ?? "—"),
+    project: s.unreleased ? projectOf(s) : (s.r_title ?? "—"),
     type: songType(s),
     year: s.release_date ? Number(s.release_date.slice(0, 4)) : null,
     collaborators: JSON.parse(s.collaborators),
@@ -200,7 +208,7 @@ function answerInfo(artistId: number, mode: Mode, id: number): AnswerInfo | unde
   return {
     id: s.id,
     title: s.title,
-    project: s.unreleased ? "Unreleased" : (s.r_title ?? "Single"),
+    project: projectOf(s),
     type: typeLabel(songType(s)),
     year: s.release_date?.slice(0, 4) ?? null,
     cover: s.r_cover ?? s.cover_url,
@@ -216,9 +224,18 @@ export function dailyAnswer(artistId: number, mode: Mode, hard: boolean, date: s
   const existing = d
     .prepare("SELECT answer_id FROM daily_puzzles WHERE artist_id = ? AND mode = ? AND hard = ? AND date = ?")
     .get(artistId, mode, hard ? 1 : 0, date) as { answer_id: number } | undefined;
-  if (existing) return existing.answer_id;
-
   const pool = answerPool(artistId, mode, hard);
+  if (existing) {
+    // a song can drop out of the pool after it was picked (reclassified as a leak, disabled by an admin…):
+    // then pick again instead of serving e.g. an unreleased song in normal mode
+    if (pool.includes(existing.answer_id)) return existing.answer_id;
+    d.prepare("DELETE FROM daily_puzzles WHERE artist_id = ? AND mode = ? AND hard = ? AND date = ?").run(
+      artistId,
+      mode,
+      hard ? 1 : 0,
+      date,
+    );
+  }
   if (!pool.length) return null;
   const window = Math.min(60, Math.floor(pool.length * 0.6));
   const recent = new Set(

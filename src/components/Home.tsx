@@ -5,6 +5,7 @@ import { MODE_INFO, MODES, type Mode } from "@/lib/game/types";
 import { Collage } from "./Collage";
 import { Countdown } from "./Countdown";
 import { useApp, useStored } from "./Providers";
+import { useDayStreaks, useStreak } from "./Streaks";
 
 const pad = (n: number) => String(n).padStart(3, "0");
 
@@ -29,16 +30,51 @@ function ModeLink({ mode }: { mode: Mode }) {
 
 function Row({ mode, i }: { mode: Mode; i: number }) {
   const s = useDailyStatus(mode);
+  const { streak } = useStreak(mode, "daily");
   return (
-    <li className="arrive grid grid-cols-[2rem_1fr_auto] items-baseline gap-x-3 py-[7px] sm:grid-cols-[3rem_9rem_1fr_9rem_6rem]" style={{ animationDelay: `${i * 50}ms` }}>
+    <li
+      className="arrive grid grid-cols-[2rem_1fr_auto_auto] items-baseline gap-x-3 py-[7px] sm:grid-cols-[3rem_9rem_1fr_9rem_6rem_6rem]"
+      style={{ animationDelay: `${i * 50}ms` }}
+    >
       <span className="caption">0{i + 1}</span>
       <span className="text-fg-hover">{MODE_INFO[mode].title}</span>
       <span className="hidden sm:block">{MODE_INFO[mode].blurb}</span>
       <span className={`hidden sm:block ${s.done ? "text-fg-hover" : ""}`}>{s.label}</span>
+      <span className="whitespace-nowrap" title="Daily streak">
+        Streak<sup className="caption">[{streak}]</sup>
+      </span>
       <Link href={`/${mode}`} className="text-right">
         {s.done ? "View" : "Play"} →
       </Link>
     </li>
+  );
+}
+
+function MobileDayStreak() {
+  const d = useDayStreaks();
+  if (!d.days && !d.bestDays) return null;
+  return (
+    <p className="mt-4 sm:hidden">
+      Day streak<sup className="caption">[{d.days}]</sup> · best {d.bestDays}
+      {!d.playedToday && d.days > 0 && <span className="text-bad"> – play today to keep it</span>}
+    </p>
+  );
+}
+
+function DayStreakLine() {
+  const d = useDayStreaks();
+  if (!d.days && !d.bestDays) return null;
+  return (
+    <span className="hidden sm:inline" title={d.playedToday ? "Streak safe for today" : "Play a daily today to keep it"}>
+      Day streak<sup className="caption">[{d.days}]</sup>
+      {d.sweep > 0 && (
+        <>
+          {" "}
+          · All 4<sup className="caption">[{d.sweep}]</sup>
+        </>
+      )}
+      {!d.playedToday && d.days > 0 && <span className="text-bad"> – play today</span>}
+    </span>
   );
 }
 
@@ -70,6 +106,7 @@ export function Home() {
               : " "}
             {hard && " – hard"}
           </span>
+          <DayStreakLine />
           <span className="flex items-center gap-2">
             Next in <Countdown className="caption" />
             <span className="sq" />
@@ -81,6 +118,7 @@ export function Home() {
           ))}
         </ul>
         {meta?.artist && !meta.artist.ready && <p className="mt-4">The song catalog is being imported – refresh in a minute.</p>}
+        <MobileDayStreak />
         <p className="mt-6">
           <Link href="/archive">Play past days →</Link>
         </p>

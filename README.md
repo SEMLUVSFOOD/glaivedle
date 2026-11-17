@@ -11,10 +11,14 @@ A fan-made, open-source -dle game in the spirit of Wordle, loldle and Hitster. F
 | **Audio**   | Heardle-style: 1s of the intro, growing with every miss or skip. 6 tries.                                     |
 | **Cover**   | A pixelated cover that sharpens with every miss. 6 tries.                                                     |
 
-- 📅 **Daily** puzzles (same for everyone, resets at midnight Europe/Amsterdam), streaks, stats and emoji sharing
+- 📅 **Daily** puzzles (same for everyone, resets at midnight Europe/Amsterdam), stats and emoji sharing
+- 🔥 **Streaks everywhere** — every mode has a daily streak (days in a row), an endless streak (rounds in a row) and an
+  archive streak, per difficulty, plus a cross-mode day streak and an "all 4 won" streak
+- 🎛 **Quick switches** — Daily / Endless / Archive and Normal / Hard toggles on every game page, a Settings dialog and
+  a filterable Stats dialog
 - 🗂 **Archive** — play every past day
 - ♾ **Endless** — unlocks per mode once you've finished that day's daily
-- 💀 **Hard mode** — adds unreleased songs and features, shorter audio clips, colourless covers; separate dailies and stats
+- 💀 **Hard mode** — adds leaks, unreleased songs and features, shorter audio clips, colourless covers; separate dailies and stats
 - 🛠 **Admin center** (`/admin`) — catalog stats, plays, today's answers, sync log, artist requests and song toggles
 - ✨ **Suggest an artist** — requests (with vote counting) land in the admin center
 - 🖼 **Covers toggle** — hide album art while guessing
@@ -30,6 +34,9 @@ at midnight (no admin action needed) and never repeat within ~60 days.
 
 - **[Deezer API](https://developers.deezer.com/api)** — discography, track numbers, durations, release dates, collaborators, cover art and 30s previews (no key needed)
 - **[LRCLIB](https://lrclib.net)** — lyrics (open database, no key needed)
+- **Curated leaks** (`src/lib/leaks.ts`) — ~75 leaked glaive songs compiled from the community tracker
+  [unreleased.world](https://www.unreleased.world/glaive), grouped by era. They're added to hard mode, and any synced song
+  with a matching title is forced to unreleased (so leaks never show up in normal mode).
 - Releases uploaded through unofficial distributors (`UNRELEASED_LABELS`, e.g. _"im alright."_ via Too Lost) are treated as **unreleased** (hard mode only). Admins can override any song's status in `/admin/songs`; overrides survive re-syncs.
 - **[Genius API](https://docs.genius.com)** _(optional, `GENIUS_ACCESS_TOKEN`)_ — producer credits, unreleased songs for hard mode, and a lyrics fallback when LRCLIB has nothing
 

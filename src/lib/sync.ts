@@ -5,6 +5,7 @@ import { featuresFromTitle, isVariantTitle, normName, normTitle, stripFeatures, 
 import * as deezer from "./sources/deezer";
 import * as genius from "./sources/genius";
 import * as lrclib from "./sources/lrclib";
+import { ERAS, type Leak, LEAKS } from "./leaks";
 
 type ReleaseType = "album" | "ep" | "single" | "feature" | "unreleased";
 const RANK: Record<ReleaseType, number> = { album: 0, ep: 1, single: 2, feature: 3, unreleased: 4 };
@@ -34,7 +35,11 @@ type SongDraft = {
   hasPreview: boolean;
   unreleased: boolean;
   isFeature: boolean;
+  era: string | null;
 };
+
+/** Looser key for matching curated leaks ("i'm alright" ≈ "im alright."). */
+const leakKey = (title: string) => normTitle(title).replace(/ /g, "");
 
 const JUNK_RE = /\b(snippet|tracklist|annotated|interview|skit|credits|discography|setlist|freestyle\s*\(live\))\b|\*|\[unreleased\]\s*$/i;
 
@@ -108,8 +113,18 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
       songs.set(draft.norm, merged);
     };
 
+    // label of each release from the previous sync, used when Deezer's album lookup fails
+    const knownLabels = new Map(
+      (
+        d.prepare("SELECT deezer_id, label FROM releases WHERE artist_id = ? AND label IS NOT NULL").all(artistId) as {
+          deezer_id: string;
+          label: string;
+        }[]
+      ).map((r) => [r.deezer_id, r.label]),
+    );
     for (const album of albums) {
-      const label = (await deezer.album(album.id).catch(() => null))?.label ?? null;
+      const label =
+        (await deezer.album(album.id).catch(() => null))?.label ?? knownLabels.get(String(album.id)) ?? null;
       // uploads through DIY distributors while signed elsewhere are leaks → unreleased
       const unofficial = !!label && env.unreleasedLabels.includes(label.toLowerCase());
       if (unofficial) say(`"${album.title}" via ${label} → treated as unreleased`);
@@ -150,6 +165,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
           hasPreview: !!t.preview,
           unreleased: unofficial,
           isFeature: false,
+          era: null,
         });
       });
     }
@@ -218,6 +234,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
           hasPreview: !!t.preview,
           unreleased: false,
           isFeature: true,
+          era: null,
         });
       }
       say(`Found ${feats.length} features on other artists' tracks`);
@@ -285,6 +302,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
               hasPreview: false,
               unreleased: true,
               isFeature: false,
+              era: null,
             });
             added++;
           }
@@ -299,6 +317,10 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
       say("Genius: skipped (no GENIUS_ACCESS_TOKEN)");
     }
 
+    // ── 3b. Curated leaks: force known leaks to unreleased, add the missing ones ──
+    applyLeaks(songs, LEAKS);
+    say(`Leaks: ${LEAKS.length} curated leaked songs applied`);
+
     // ── 4. Persist ─────────────────────────────────────────────────────
     const upsertRelease = d.prepare(`
       INSERT INTO releases (artist_id, deezer_id, title, title_norm, type, release_date, cover_url, label)
@@ -309,9 +331,9 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
       RETURNING id`);
     const upsertSong = d.prepare(`
       INSERT INTO songs (artist_id, title, title_norm, release_id, track_number, duration, release_date,
-        deezer_id, genius_id, genius_url, cover_url, collaborators, producers, has_preview, unreleased, is_feature)
+        deezer_id, genius_id, genius_url, cover_url, collaborators, producers, has_preview, unreleased, is_feature, era)
       VALUES (@artistId, @title, @norm, @releaseId, @trackNumber, @duration, @releaseDate,
-        @deezerId, @geniusId, @geniusUrl, @cover, @collaborators, @producers, @hasPreview, @unreleased, @isFeature)
+        @deezerId, @geniusId, @geniusUrl, @cover, @collaborators, @producers, @hasPreview, @unreleased, @isFeature, @era)
       ON CONFLICT(artist_id, title_norm) DO UPDATE SET
         title = excluded.title, release_id = excluded.release_id, track_number = excluded.track_number,
         duration = excluded.duration, release_date = excluded.release_date, deezer_id = excluded.deezer_id,
@@ -319,7 +341,8 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
         genius_url = COALESCE(excluded.genius_url, songs.genius_url),
         cover_url = excluded.cover_url, collaborators = excluded.collaborators,
         producers = CASE WHEN excluded.producers = '[]' THEN songs.producers ELSE excluded.producers END,
-        has_preview = excluded.has_preview, unreleased = excluded.unreleased, is_feature = excluded.is_feature`);
+        has_preview = excluded.has_preview, unreleased = excluded.unreleased, is_feature = excluded.is_feature,
+        era = excluded.era`);
 
     d.transaction(() => {
       const releaseIds = new Map<string, number>();
@@ -373,6 +396,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
           hasPreview: s.hasPreview ? 1 : 0,
           unreleased: s.unreleased ? 1 : 0,
           isFeature: s.isFeature ? 1 : 0,
+          era: s.era,
         });
       }
       // admin overrides win over whatever the sources say
@@ -425,5 +449,46 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
     say(`FAILED: ${(e as Error).message}`);
     d.prepare("UPDATE artists SET sync_status = 'error', sync_log = ? WHERE id = ?").run(log.join("\n"), artistId);
     return { ok: false, songs: 0, log };
+  }
+}
+
+/** Marks synced songs that are known leaks as unreleased and adds curated leaks we don't have yet. */
+function applyLeaks(songs: Map<string, SongDraft>, leaks: Leak[]) {
+  const byKey = new Map<string, SongDraft>();
+  for (const s of songs.values()) byKey.set(leakKey(s.title), s);
+  for (const leak of leaks) {
+    const norm = normTitle(leak.title);
+    if (!norm) continue;
+    const era = ERAS[leak.era];
+    const existing = byKey.get(leakKey(leak.title)) ?? songs.get(norm);
+    if (existing) {
+      existing.unreleased = true;
+      existing.isFeature = false;
+      existing.trackNumber = null;
+      existing.era = era.key;
+      existing.duration ??= leak.duration ?? null;
+      existing.releaseDate ??= `${era.year}-01-01`;
+      continue;
+    }
+    const draft: SongDraft = {
+      norm,
+      title: leak.title,
+      release: null,
+      trackNumber: null,
+      duration: leak.duration ?? null,
+      releaseDate: `${era.year}-01-01`,
+      deezerId: null,
+      geniusId: null,
+      geniusUrl: null,
+      cover: null,
+      collaborators: uniqueNames(leak.collaborators ?? []),
+      producers: [],
+      hasPreview: false,
+      unreleased: true,
+      isFeature: false,
+      era: era.key,
+    };
+    songs.set(norm, draft);
+    byKey.set(leakKey(leak.title), draft);
   }
 }

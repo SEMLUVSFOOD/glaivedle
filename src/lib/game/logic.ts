@@ -69,7 +69,9 @@ export function compareClassic(guess: ClassicSong, answer: ClassicSong, opts: { 
       guess.releaseId !== null && guess.releaseId === answer.releaseId
         ? "correct"
         : guess.releaseId === null && answer.releaseId === null && guess.type === answer.type
-          ? "correct"
+          ? guess.project === answer.project
+            ? "correct"
+            : "partial" // both leaks, different era
           : "wrong",
   });
 

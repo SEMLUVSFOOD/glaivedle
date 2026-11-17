@@ -2,7 +2,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { useApp, useStored } from "@/components/Providers";
 import type { GuessResponse, Kind, Mode, RoundView } from "../game/types";
-import { load, proofKey, recentKey, recordDaily, roundKey, save, type SavedRound } from "./storage";
+import {
+  load,
+  proofKey,
+  recentKey,
+  recordArchive,
+  recordDaily,
+  recordEndless,
+  roundKey,
+  save,
+  type SavedRound,
+} from "./storage";
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -75,13 +85,19 @@ export function useRound(mode: Mode, kind: Kind, archiveDate: string | null) {
         const res = await post<GuessResponse>("/api/round/guess", { token: saved.round.token, guessId });
         const next: SavedRound = { round: res.round, guesses: [...saved.guesses, res.entry] };
         if (res.round.finished) {
-          if (res.round.kind === "daily" && res.round.date) {
-            recordDaily(mode, hard, res.round.date, res.round.won, next.guesses.length);
-            if (res.round.proof) save(proofKey(mode, hard), { date: res.round.date, proof: res.round.proof });
-          }
-          if (res.round.kind === "endless" && res.round.answer) {
-            const recent = load<number[]>(recentKey(mode, hard), []);
-            save(recentKey(mode, hard), [res.round.answer.id, ...recent].slice(0, 60));
+          const r = res.round;
+          const n = next.guesses.length;
+          if (r.kind === "daily" && r.date) {
+            next.streak = recordDaily(mode, hard, r.date, r.won, n);
+            if (r.proof) save(proofKey(mode, hard), { date: r.date, proof: r.proof });
+          } else if (r.kind === "archive" && r.date) {
+            next.streak = recordArchive(mode, hard, r.date, r.won, n);
+          } else if (r.kind === "endless") {
+            next.streak = recordEndless(mode, hard, r.won, n);
+            if (r.answer) {
+              const recent = load<number[]>(recentKey(mode, hard), []);
+              save(recentKey(mode, hard), [r.answer.id, ...recent].slice(0, 60));
+            }
           }
         }
         save(key, next);

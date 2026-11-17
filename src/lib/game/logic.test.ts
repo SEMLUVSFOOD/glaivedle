@@ -43,6 +43,12 @@ describe("compareClassic", () => {
     expect(cells.track.verdict).toBe("unknown");
   });
 
+  it("marks leaks from different eras as a partial project match", () => {
+    const u = { ...base, releaseId: null, project: "SoundCloud era", type: "unreleased", trackNumber: null };
+    const cells = compareClassic({ ...u, id: 2, project: "cypress grove era" }, u, { producers: false });
+    expect(cells.find((c) => c.key === "project")?.verdict).toBe("partial");
+  });
+
   it("handles unknown data", () => {
     const cells = compareClassic({ ...base, duration: null, trackNumber: null }, base, { producers: false });
     expect(cells.find((c) => c.key === "length")?.verdict).toBe("unknown");

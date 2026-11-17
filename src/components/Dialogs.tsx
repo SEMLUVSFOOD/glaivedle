@@ -1,8 +1,10 @@
 "use client";
-import { useEffect, useRef } from "react";
-import { emptyStats, type Stats, statsKey } from "@/lib/client/storage";
+import { useEffect, useRef, useState } from "react";
+import { type Track, TRACKS } from "@/lib/client/storage";
 import { MODE_INFO, MODES, type Mode } from "@/lib/game/types";
-import { useApp, useStored } from "./Providers";
+import { useApp } from "./Providers";
+import { TRACK_INFO, useDayStreaks, useStreak } from "./Streaks";
+import { Segmented, Switch } from "./ui";
 
 export function Dialogs() {
   const { dialog, closeDialog } = useApp();
@@ -23,12 +25,14 @@ export function Dialogs() {
       className="box m-auto max-h-[88dvh] w-[min(36rem,calc(100vw-2*var(--margin)))] overflow-y-auto p-0"
     >
       <div className="sticky top-0 flex items-start justify-between bg-bg px-5 pt-5 pb-4">
-        <h2 className="title">{dialog === "stats" ? "Stats" : "Help"}</h2>
+        <h2 className="title">{dialog === "stats" ? "Stats" : dialog === "settings" ? "Settings" : "Help"}</h2>
         <button type="button" onClick={closeDialog} className="small hoverable underline underline-offset-4">
           Close
         </button>
       </div>
-      <div className="px-5 pb-6">{dialog === "stats" ? <StatsBody /> : dialog === "help" ? <HelpBody /> : null}</div>
+      <div className="px-5 pb-6">
+        {dialog === "stats" ? <StatsBody /> : dialog === "settings" ? <SettingsBody /> : dialog === "help" ? <HelpBody /> : null}
+      </div>
     </dialog>
   );
 }
@@ -70,28 +74,127 @@ function HelpBody() {
         <span className="col-span-2">↑ ↓ – the answer is higher or lower (later year, longer song, later track).</span>
       </div>
       <p className="small">
-        <span className="text-fg-hover">Hard</span> adds unreleased songs and features, shortens audio clips and drains the colour
-        from covers. It has its own dailies and stats. <span className="text-fg-hover">Covers</span> off hides album art while
-        you guess. New puzzles pick themselves at midnight, Amsterdam time.
+        <span className="text-fg-hover">Streaks</span> – every mode keeps a daily streak (days in a row solved), an endless streak
+        (rounds in a row) and an archive streak, separately for normal and hard. Your day streak counts the days you finish at
+        least one daily.
+      </p>
+      <p className="small">
+        <span className="text-fg-hover">Hard</span> adds leaks, unreleased songs and features, shortens audio clips and drains the
+        colour from covers. It has its own dailies, stats and streaks. Change it and hide album covers in{" "}
+        <span className="text-fg-hover">Settings</span>. New puzzles pick themselves at midnight, Amsterdam time.
       </p>
     </div>
   );
 }
 
-function StatsBody() {
-  const { hard } = useApp();
+function SettingsBody() {
+  const { hard, setHard, covers, setCovers } = useApp();
   return (
-    <div className="space-y-8">
-      <p className="caption">{hard ? "HARD" : "NORMAL"} – DAILY ONLY</p>
+    <div className="space-y-7">
+      <section className="space-y-3">
+        <h3 className="nav-link flex items-center gap-2">
+          Difficulty
+          <span className="sq" />
+        </h3>
+        <Segmented<"normal" | "hard">
+          label="Difficulty"
+          value={hard ? "hard" : "normal"}
+          onChange={(v) => setHard(v === "hard")}
+          options={[
+            { value: "normal", label: "Normal" },
+            { value: "hard", label: "Hard" },
+          ]}
+        />
+        <ul className="small space-y-1">
+          <li className={hard ? "" : "text-fg-hover"}>
+            <span className="caption">N</span> Released songs from albums, EPs and singles. 1s audio intro, full-colour covers.
+          </li>
+          <li className={hard ? "text-fg-hover" : ""}>
+            <span className="caption">H</span> Adds leaks, unreleased songs and features. Shorter clips, colourless covers.
+          </li>
+        </ul>
+        <p className="small text-soft">Each difficulty has its own dailies, stats and streaks – switching never resets anything.</p>
+      </section>
+
+      <section className="flex items-start justify-between gap-6">
+        <div>
+          <h3 className="nav-link mb-2 flex items-center gap-2">
+            Album covers
+            <span className="sq" />
+          </h3>
+          <p className="small">Show artwork next to songs while you guess. Turn off for a harder, spoiler-free list.</p>
+        </div>
+        <Switch checked={covers} onChange={setCovers} label="Show album covers" />
+      </section>
+    </div>
+  );
+}
+
+function StatsBody() {
+  const app = useApp();
+  const [hard, setHard] = useState(app.hard);
+  const [track, setTrack] = useState<Track>("daily");
+  return (
+    <div className="space-y-7">
+      <div className="flex flex-wrap gap-2">
+        <Segmented<Track>
+          label="Game type"
+          value={track}
+          onChange={setTrack}
+          options={TRACKS.map((t) => ({ value: t, label: TRACK_INFO[t].title }))}
+        />
+        <Segmented<"normal" | "hard">
+          label="Difficulty"
+          value={hard ? "hard" : "normal"}
+          onChange={(v) => setHard(v === "hard")}
+          options={[
+            { value: "normal", label: "Normal" },
+            { value: "hard", label: "Hard" },
+          ]}
+        />
+      </div>
+      {track === "daily" ? <DayStreaks hard={hard} /> : <p className="caption">STREAK = {TRACK_INFO[track].streakHint.toUpperCase()}</p>}
       {MODES.map((m) => (
-        <ModeStats key={m} mode={m} hard={hard} />
+        <ModeStats key={m} mode={m} hard={hard} track={track} />
       ))}
     </div>
   );
 }
 
-function ModeStats({ mode, hard }: { mode: Mode; hard: boolean }) {
-  const s = useStored<Stats>(statsKey(mode, hard), emptyStats());
+function Num({ v, l, hi = false }: { v: number | string; l: string; hi?: boolean }) {
+  return (
+    <div>
+      <dd className={`text-[26px] leading-none tracking-[-0.06em] tabular-nums ${hi ? "text-ink" : "text-fg-hover"}`}>{v}</dd>
+      <dt>{l}</dt>
+    </div>
+  );
+}
+
+function DayStreaks({ hard }: { hard: boolean }) {
+  const d = useDayStreaks(hard);
+  return (
+    <section className="box px-4 py-3">
+      <dl className="small grid grid-cols-4 gap-2">
+        <Num v={d.days} l="Day streak" hi={d.playedToday && d.days > 0} />
+        <Num v={d.bestDays} l="Best" />
+        <Num v={d.sweep} l="All-4 streak" hi={d.sweptToday && d.sweep > 0} />
+        <Num v={d.bestSweep} l="Best" />
+      </dl>
+      <p className="small mt-2 text-soft">
+        {d.playedToday
+          ? d.sweptToday
+            ? "All four dailies solved today."
+            : "Day streak safe for today. Solve all four to grow your all-4 streak."
+          : d.days > 0
+            ? "Play a daily today to keep your streak alive."
+            : "Finish any daily to start a day streak."}
+      </p>
+    </section>
+  );
+}
+
+function ModeStats({ mode, hard, track }: { mode: Mode; hard: boolean; track: Track }) {
+  const { stats: s, streak } = useStreak(mode, track, hard);
   const buckets = mode === "classic" ? ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"] : ["1", "2", "3", "4", "5", "6", "X"];
   const max = Math.max(1, ...buckets.map((b) => s.dist[b] ?? 0));
   return (
@@ -101,34 +204,33 @@ function ModeStats({ mode, hard }: { mode: Mode; hard: boolean }) {
         <span className="sq" />
       </h3>
       <dl className="small mb-3 grid grid-cols-4">
-        {[
-          ["Played", s.played],
-          ["Win %", s.played ? Math.round((s.won / s.played) * 100) : 0],
-          ["Streak", s.streak],
-          ["Best", s.maxStreak],
-        ].map(([l, v]) => (
-          <div key={l}>
-            <dd className="text-[26px] leading-none tracking-[-0.06em] text-fg-hover tabular-nums">{v}</dd>
-            <dt>{l}</dt>
-          </div>
-        ))}
+        <Num v={s.played} l="Played" />
+        <Num v={s.played ? Math.round((s.won / s.played) * 100) : 0} l="Win %" />
+        <Num v={streak} l="Streak" hi={streak > 0 && streak === s.maxStreak} />
+        <Num v={s.maxStreak} l="Best" />
       </dl>
-      <div className="space-y-[3px]">
-        {buckets.map((b) => {
-          const v = s.dist[b] ?? 0;
-          return (
-            <div key={b} className="flex items-center gap-2">
-              <span className="caption w-6 text-right">{b}</span>
-              <span
-                className={`caption flex h-[14px] items-center justify-end rounded-[2px] pr-1 text-[10px] text-bg ${b === "X" ? "bg-bad" : "bg-fg"}`}
-                style={{ width: `${Math.max(5, (v / max) * 100)}%` }}
-              >
-                {v}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      {s.played === 0 ? (
+        <p className="small text-soft">
+          No {TRACK_INFO[track].title.toLowerCase()} games yet{hard ? " on hard" : ""}.
+        </p>
+      ) : (
+        <div className="space-y-[3px]">
+          {buckets.map((b) => {
+            const v = s.dist[b] ?? 0;
+            return (
+              <div key={b} className="flex items-center gap-2">
+                <span className="caption w-6 text-right">{b}</span>
+                <span
+                  className={`caption flex h-[14px] items-center justify-end rounded-[2px] pr-1 text-[10px] text-bg ${b === "X" ? "bg-bad" : "bg-fg"}`}
+                  style={{ width: `${Math.max(5, (v / max) * 100)}%` }}
+                >
+                  {v}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

@@ -1,7 +1,7 @@
 import { verdictEmoji } from "../game/logic";
 import { MODE_INFO, type GuessEntry, type RoundView } from "../game/types";
 
-export function shareText(round: RoundView, guesses: GuessEntry[], site: string): string {
+export function shareText(round: RoundView, guesses: GuessEntry[], site: string, streak = 0): string {
   const head = [
     "glaivedle",
     round.kind === "endless" ? "∞" : `#${round.number}`,
@@ -22,5 +22,6 @@ export function shareText(round: RoundView, guesses: GuessEntry[], site: string)
     while (cells.length < max) cells.push("⬜");
     body = `${round.won ? `${guesses.length}/${max}` : `X/${max}`}\n${cells.join("")}`;
   }
-  return `${head}\n${body}\n${site}`;
+  const run = streak > 1 ? `\n🔥 ${streak} ${round.kind === "endless" ? "in a row" : round.kind === "archive" ? "archive streak" : "day streak"}` : "";
+  return `${head}\n${body}${run}\n${site}`;
 }

@@ -12,14 +12,16 @@ export type Meta = {
   artist: { name: string; image: string | null; ready: boolean } | null;
 };
 
+export type DialogName = "help" | "stats" | "settings";
+
 type Ctx = {
   meta: Meta | null;
   hard: boolean;
   setHard: (v: boolean) => void;
   covers: boolean;
   setCovers: (v: boolean) => void;
-  openDialog: (name: "help" | "stats") => void;
-  dialog: "help" | "stats" | null;
+  openDialog: (name: DialogName) => void;
+  dialog: DialogName | null;
   closeDialog: () => void;
 };
 

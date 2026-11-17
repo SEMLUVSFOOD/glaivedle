@@ -4,6 +4,8 @@ import { roundKey, type SavedRound } from "@/lib/client/storage";
 import { addDays, daysBetween } from "@/lib/dates";
 import { MODE_INFO, MODES, type Mode } from "@/lib/game/types";
 import { useApp, useStored } from "./Providers";
+import { useStreak } from "./Streaks";
+import { Segmented } from "./ui";
 
 function Cell({ mode, date }: { mode: Mode; date: string }) {
   const { hard, meta } = useApp();
@@ -25,12 +27,47 @@ function Cell({ mode, date }: { mode: Mode; date: string }) {
   );
 }
 
+function ArchiveBar() {
+  const { hard, setHard } = useApp();
+  return (
+    <div className="space-y-4">
+      <Segmented<"normal" | "hard">
+        label="Difficulty"
+        value={hard ? "hard" : "normal"}
+        onChange={(v) => setHard(v === "hard")}
+        options={[
+          { value: "normal", label: "Normal" },
+          { value: "hard", label: "Hard" },
+        ]}
+      />
+      <p className="small flex flex-wrap gap-x-5 gap-y-1">
+        <span>Archive streaks</span>
+        {MODES.map((m) => (
+          <ArchiveStreak key={m} mode={m} />
+        ))}
+      </p>
+    </div>
+  );
+}
+
+function ArchiveStreak({ mode }: { mode: Mode }) {
+  const { streak, best } = useStreak(mode, "archive");
+  return (
+    <span className="whitespace-nowrap" title={`Archive streak, best ${best}`}>
+      {MODE_INFO[mode].title}
+      <sup className="caption">[{streak}]</sup>
+    </span>
+  );
+}
+
 export function Archive() {
   const { meta } = useApp();
   if (!meta) return <p className="small">Loading…</p>;
   const n = daysBetween(meta.launchDate, meta.today) + 1;
   const days = Array.from({ length: Math.min(n, 365) }, (_, i) => addDays(meta.today, -i));
   return (
+    <div className="space-y-6">
+    <ArchiveBar />
     <ul className="small">
       {days.map((d) => {
         const date = new Date(d + "T12:00:00Z");
@@ -50,5 +87,6 @@ export function Archive() {
         );
       })}
     </ul>
+    </div>
   );
 }

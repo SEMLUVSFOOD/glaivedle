@@ -14,6 +14,8 @@ import { GuessInput } from "./GuessInput";
 import { GuessSlots } from "./GuessSlots";
 import { LyricsBoard } from "./LyricsBoard";
 import { ModeTabs } from "./ModeTabs";
+import { PlayBar } from "./PlayBar";
+import { StreakTag } from "../Streaks";
 
 const pad = (n: number) => String(n).padStart(3, "0");
 
@@ -48,7 +50,8 @@ export function Game({ mode }: { mode: Mode }) {
 
   return (
     <div>
-      <ModeTabs current={mode} />
+      <ModeTabs current={mode} kind={kind} date={kind === "archive" ? d : null} />
+      <PlayBar mode={mode} kind={kind} />
 
       <div className="mb-8 flex items-start justify-between gap-4">
         <h1 className="headline flex items-start gap-2">
@@ -59,11 +62,7 @@ export function Game({ mode }: { mode: Mode }) {
           <p>{kind === "endless" ? "∞ rounds" : date ? shortDate(date) : ""}</p>
           {hard && <p className="text-fg-hover">Hard</p>}
           <p>
-            {kind === "endless" || kind === "archive" ? (
-              <Link href={`/${mode}`}>Today →</Link>
-            ) : (
-              <Link href={`/${mode}?endless=1`}>Endless →</Link>
-            )}
+            <StreakTag mode={mode} track={kind} />
           </p>
         </div>
       </div>
@@ -94,7 +93,9 @@ export function Game({ mode }: { mode: Mode }) {
 
       {status === "ready" && round && (
         <div className="space-y-8">
-          {round.finished && <EndCard round={round} guesses={guesses} onNextEndless={() => void restart()} />}
+          {round.finished && (
+            <EndCard round={round} guesses={guesses} streak={saved.streak} onNextEndless={() => void restart()} />
+          )}
 
           {mode === "lyrics" && <LyricsBoard round={round} />}
           {mode === "audio" && <AudioBoard round={round} />}

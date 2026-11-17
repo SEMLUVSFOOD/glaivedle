@@ -8,7 +8,9 @@ export async function GET(req: Request) {
   if (!artist) return Response.json([]);
   const rows = db()
     .prepare(
-      `SELECT title, cover_url FROM releases WHERE artist_id = ? AND enabled = 1 AND cover_url IS NOT NULL AND type != 'feature'
+      `SELECT title, cover_url FROM releases WHERE artist_id = ? AND enabled = 1 AND cover_url IS NOT NULL
+         AND type NOT IN ('feature', 'unreleased')
+         AND NOT EXISTS (SELECT 1 FROM songs s WHERE s.release_id = releases.id AND s.unreleased = 1)
        ORDER BY release_date DESC`,
     )
     .all(artist.id) as { title: string; cover_url: string }[];

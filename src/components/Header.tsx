@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useApp } from "./Providers";
+import { useDayStreaks } from "./Streaks";
 
 function Item({
   children,
@@ -34,7 +35,7 @@ function Item({
 }
 
 export function Header() {
-  const { hard, setHard, covers, setCovers, openDialog, meta } = useApp();
+  const { hard, openDialog, dialog, meta } = useApp();
   const path = usePathname();
   return (
     <header className="flex items-start justify-between gap-2 px-[calc(var(--margin)-6px)] pt-[max(14px,env(safe-area-inset-top))] pb-6 sm:pb-12">
@@ -42,18 +43,30 @@ export function Header() {
         glaivedle
       </Link>
       <nav className="flex flex-col items-end gap-y-0.5 sm:flex-row sm:items-start sm:gap-x-6" aria-label="Main">
-        <Item onClick={() => setHard(!hard)} selected={hard} count={hard ? "on" : "off"} title="Hard mode: unreleased songs, features, shorter clips">
-          Hard
-        </Item>
-        <Item onClick={() => setCovers(!covers)} selected={!covers} count={covers ? "on" : "off"} title="Show or hide album covers while guessing">
-          Covers
-        </Item>
         <Item href="/archive" selected={path === "/archive"} count={meta ? meta.number : undefined}>
           Archive
         </Item>
-        <Item onClick={() => openDialog("stats")}>Stats</Item>
-        <Item onClick={() => openDialog("help")}>Help</Item>
+        <Item onClick={() => openDialog("stats")} selected={dialog === "stats"} count={<HeaderStreak />}>
+          Stats
+        </Item>
+        <Item
+          onClick={() => openDialog("settings")}
+          selected={dialog === "settings"}
+          count={hard ? "hard" : undefined}
+          title="Difficulty and display settings"
+        >
+          Settings
+        </Item>
+        <Item onClick={() => openDialog("help")} selected={dialog === "help"}>
+          Help
+        </Item>
       </nav>
     </header>
   );
+}
+
+/** Day streak (any daily finished) next to the Stats link. */
+function HeaderStreak() {
+  const { days } = useDayStreaks();
+  return <span title={`${days}-day streak`}>{days}</span>;
 }

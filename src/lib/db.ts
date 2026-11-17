@@ -114,6 +114,13 @@ const MIGRATIONS: { id: number; sql: string }[] = [
       ALTER TABLE releases ADD COLUMN label TEXT;
     `,
   },
+  {
+    id: 3,
+    sql: /* sql */ `
+      -- era of a leaked / unreleased song (see src/lib/leaks.ts), shown as its "project"
+      ALTER TABLE songs ADD COLUMN era TEXT;
+    `,
+  },
 ];
 
 declare global {
