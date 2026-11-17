@@ -5,6 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-17
+
+### Added
+
+- Unofficial uploads (distributor labels in `UNRELEASED_LABELS`, default "Too Lost") are classified as unreleased –
+  e.g. "im alright." now only appears in hard mode.
+- Admin can mark any song released/unreleased; overrides survive catalog syncs.
+
+### Changed
+
+- Classic board is a fluid grid: the whole row fits on phones (tested down to 320px) without sideways scrolling.
+- Mode tabs fit on one line on small phones.
+
+### Fixed
+
+- Dev server reload loop: the dev database now lives in `~/.glaivedle/` instead of the watched project folder.
+- Concurrent catalog syncs across bundles, and retries for Deezer's "quota exceeded" responses.
+- A daily answer that is later reclassified as unreleased can still be guessed in normal mode.
+
 ## [0.2.0] - 2026-11-17
 
 ### Changed
@@ -34,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - glaive "God Save The Three" theme, mobile-first layout.
 - Docker image, Docker Compose file and Coolify instructions; health endpoint.
 
-[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/SEMLUVSFOOD/glaivedle/releases/tag/v0.1.0

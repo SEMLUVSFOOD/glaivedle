@@ -25,10 +25,12 @@ length and covers are pixelated server-side.
 
 ## Data sources
 
-Everything is synced automatically (on first boot and every `SYNC_INTERVAL_HOURS`):
+Everything is synced automatically (on first boot and every `SYNC_INTERVAL_HOURS`). Daily answers pick themselves
+at midnight (no admin action needed) and never repeat within ~60 days.
 
 - **[Deezer API](https://developers.deezer.com/api)** — discography, track numbers, durations, release dates, collaborators, cover art and 30s previews (no key needed)
 - **[LRCLIB](https://lrclib.net)** — lyrics (open database, no key needed)
+- Releases uploaded through unofficial distributors (`UNRELEASED_LABELS`, e.g. _"im alright."_ via Too Lost) are treated as **unreleased** (hard mode only). Admins can override any song's status in `/admin/songs`; overrides survive re-syncs.
 - **[Genius API](https://docs.genius.com)** _(optional, `GENIUS_ACCESS_TOKEN`)_ — producer credits, unreleased songs for hard mode, and a lyrics fallback when LRCLIB has nothing
 
 ## Stack
@@ -81,6 +83,7 @@ The same file works anywhere with `docker compose up -d`.
 | `LAUNCH_DATE`         |          | `2026-11-17`           | Day of puzzle #1 (archive starts here)                    |
 | `SYNC_INTERVAL_HOURS` |          | `24`                   | Catalog re-sync interval (`0` disables)                   |
 | `DATABASE_PATH`       |          | `/data/glaivedle.db`   | SQLite file location                                      |
+| `UNRELEASED_LABELS`   |          | `Too Lost`             | Comma-separated distributor labels treated as leaks → unreleased |
 | `ADOBE_FONTS_KIT`     |          | —                      | Adobe Fonts kit id for Helvetica Neue LT Pro (build-time) |
 
 ## Design & fonts
