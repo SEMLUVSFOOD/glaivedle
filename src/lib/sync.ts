@@ -12,6 +12,7 @@ const RANK: Record<ReleaseType, number> = { album: 0, ep: 1, single: 2, feature:
 type ReleaseDraft = {
   key: string; // deezer id or synthetic
   title: string;
+  label?: string | null;
   type: ReleaseType;
   releaseDate: string | null;
   cover: string | null;
@@ -37,23 +38,27 @@ type SongDraft = {
 
 const JUNK_RE = /\b(snippet|tracklist|annotated|interview|skit|credits|discography|setlist|freestyle\s*\(live\))\b|\*|\[unreleased\]\s*$/i;
 
-let running: Promise<SyncResult> | null = null;
+// Shared across module instances: Next can load this file in more than one bundle
+// (instrumentation + routes), and two concurrent syncs would hit Deezer's rate limit.
+declare global {
+  var __glaivedleSync: Promise<SyncResult> | null | undefined;
+}
 
 export type SyncResult = { ok: boolean; songs: number; log: string[] };
 
 /** Runs a full catalog sync for the configured artist. Concurrent calls share one run. */
 export function syncArtist(opts: { slug?: string; name?: string; deezerId?: string } = {}): Promise<SyncResult> {
-  running ??= doSync({
+  globalThis.__glaivedleSync ??= doSync({
     slug: opts.slug ?? env.artistSlug,
     name: opts.name ?? env.artistName,
     deezerId: opts.deezerId ?? env.deezerArtistId,
   }).finally(() => {
-    running = null;
+    globalThis.__glaivedleSync = null;
   });
-  return running;
+  return globalThis.__glaivedleSync;
 }
 
-export const isSyncRunning = () => running !== null;
+export const isSyncRunning = () => !!globalThis.__glaivedleSync;
 
 async function doSync({ slug, name, deezerId }: { slug: string; name: string; deezerId: string }): Promise<SyncResult> {
   const log: string[] = [];
@@ -104,10 +109,21 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
     };
 
     for (const album of albums) {
-      const type: ReleaseType = album.record_type === "album" ? "album" : album.record_type === "ep" ? "ep" : "single";
+      const label = (await deezer.album(album.id).catch(() => null))?.label ?? null;
+      // uploads through DIY distributors while signed elsewhere are leaks → unreleased
+      const unofficial = !!label && env.unreleasedLabels.includes(label.toLowerCase());
+      if (unofficial) say(`"${album.title}" via ${label} → treated as unreleased`);
+      const type: ReleaseType = unofficial
+        ? "unreleased"
+        : album.record_type === "album"
+          ? "album"
+          : album.record_type === "ep"
+            ? "ep"
+            : "single";
       const release: ReleaseDraft = {
         key: String(album.id),
         title: album.title,
+        label,
         type,
         releaseDate: album.release_date || null,
         cover: album.cover_xl || album.cover_big || null,
@@ -122,7 +138,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
           norm,
           title: stripFeatures(t.title),
           release,
-          trackNumber: t.track_position ?? i + 1,
+          trackNumber: unofficial ? null : (t.track_position ?? i + 1),
           duration: t.duration || null,
           releaseDate: release.releaseDate,
           deezerId: String(t.id),
@@ -132,7 +148,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
           collaborators: featuresFromTitle(t.title),
           producers: [],
           hasPreview: !!t.preview,
-          unreleased: false,
+          unreleased: unofficial,
           isFeature: false,
         });
       });
@@ -285,10 +301,10 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
 
     // ── 4. Persist ─────────────────────────────────────────────────────
     const upsertRelease = d.prepare(`
-      INSERT INTO releases (artist_id, deezer_id, title, title_norm, type, release_date, cover_url)
-      VALUES (@artistId, @key, @title, @norm, @type, @releaseDate, @cover)
+      INSERT INTO releases (artist_id, deezer_id, title, title_norm, type, release_date, cover_url, label)
+      VALUES (@artistId, @key, @title, @norm, @type, @releaseDate, @cover, @label)
       ON CONFLICT(artist_id, deezer_id) DO UPDATE SET
-        title = excluded.title, title_norm = excluded.title_norm, type = excluded.type,
+        title = excluded.title, title_norm = excluded.title_norm, type = excluded.type, label = excluded.label,
         release_date = excluded.release_date, cover_url = excluded.cover_url
       RETURNING id`);
     const upsertSong = d.prepare(`
@@ -317,6 +333,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
           type: r.type,
           releaseDate: r.releaseDate,
           cover: r.cover,
+          label: r.label ?? null,
         }) as { id: number };
         releaseIds.set(r.key, row.id);
       }
@@ -333,6 +350,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
               type: s.release.type,
               releaseDate: s.release.releaseDate,
               cover: s.release.cover,
+              label: s.release.label ?? null,
             }) as { id: number };
             releaseId = r.id;
             releaseIds.set(s.release.key, releaseId);
@@ -357,6 +375,11 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
           isFeature: s.isFeature ? 1 : 0,
         });
       }
+      // admin overrides win over whatever the sources say
+      d.prepare(
+        `UPDATE songs SET unreleased = CASE status_override WHEN 'unreleased' THEN 1 ELSE 0 END
+         WHERE artist_id = ? AND status_override IS NOT NULL`,
+      ).run(artistId);
     })();
     say(`Saved ${songs.size} songs`);
 

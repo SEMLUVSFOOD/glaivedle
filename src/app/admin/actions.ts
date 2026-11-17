@@ -49,3 +49,18 @@ export async function toggleSong(form: FormData) {
   db().prepare("UPDATE songs SET enabled = 1 - enabled WHERE id = ?").run(id);
   refresh();
 }
+
+export async function setSongStatus(form: FormData) {
+  await requireAdmin();
+  const id = Number(form.get("id"));
+  const status = String(form.get("status"));
+  if (!Number.isInteger(id) || !["unreleased", "released", "auto"].includes(status)) return;
+  if (status === "auto") {
+    db().prepare("UPDATE songs SET status_override = NULL WHERE id = ?").run(id);
+  } else {
+    db()
+      .prepare("UPDATE songs SET status_override = ?, unreleased = ? WHERE id = ?")
+      .run(status, status === "unreleased" ? 1 : 0, id);
+  }
+  refresh();
+}

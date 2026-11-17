@@ -35,6 +35,14 @@ describe("compareClassic", () => {
     expect(cells.find((c) => c.key === "length")?.verdict).toBe("partial");
   });
 
+  it("treats two unreleased songs as the same project", () => {
+    const u = { ...base, releaseId: null, project: "Unreleased", type: "unreleased", trackNumber: null };
+    const cells = Object.fromEntries(compareClassic({ ...u, id: 2 }, u, { producers: false }).map((c) => [c.key, c]));
+    expect(cells.project.verdict).toBe("correct");
+    expect(cells.type.verdict).toBe("correct");
+    expect(cells.track.verdict).toBe("unknown");
+  });
+
   it("handles unknown data", () => {
     const cells = compareClassic({ ...base, duration: null, trackNumber: null }, base, { producers: false });
     expect(cells.find((c) => c.key === "length")?.verdict).toBe("unknown");

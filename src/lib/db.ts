@@ -106,6 +106,14 @@ const MIGRATIONS: { id: number; sql: string }[] = [
       CREATE INDEX artist_requests_norm ON artist_requests(name_norm);
     `,
   },
+  {
+    id: 2,
+    sql: /* sql */ `
+      -- admin override that survives catalog syncs: 'unreleased' | 'released' | NULL
+      ALTER TABLE songs ADD COLUMN status_override TEXT;
+      ALTER TABLE releases ADD COLUMN label TEXT;
+    `,
+  },
 ];
 
 declare global {

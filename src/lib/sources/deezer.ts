@@ -32,10 +32,17 @@ type DzError = { error?: { message: string; code: number } };
 type DzPage<T> = { data: T[]; next?: string; total?: number } & DzError;
 
 async function dz<T>(path: string): Promise<T> {
-  const data = await fetchJson<T & DzError>(path.startsWith("http") ? path : API + path, { minGapMs: 130 });
-  if (!data) throw new Error(`Deezer: empty response for ${path}`);
-  if (data.error) throw new Error(`Deezer: ${data.error.message} (${path})`);
-  return data;
+  for (let attempt = 0; ; attempt++) {
+    const data = await fetchJson<T & DzError>(path.startsWith("http") ? path : API + path, { minGapMs: 130 });
+    if (!data) throw new Error(`Deezer: empty response for ${path}`);
+    // code 4 = "Quota limit exceeded" (50 requests / 5s), returned with HTTP 200
+    if (data.error?.code === 4 && attempt < 5) {
+      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+      continue;
+    }
+    if (data.error) throw new Error(`Deezer: ${data.error.message} (${path})`);
+    return data;
+  }
 }
 
 async function all<T>(path: string): Promise<T[]> {
@@ -58,6 +65,8 @@ export async function findArtist(nameOrId: string): Promise<DzArtist | null> {
 
 export const artistAlbums = (artistId: string | number) =>
   all<DzAlbumSummary>(`/artist/${artistId}/albums?limit=100`);
+
+export const album = (albumId: string | number) => dz<{ id: number; label?: string }>(`/album/${albumId}`);
 
 export const albumTracks = (albumId: string | number) =>
   all<DzTrackSummary>(`/album/${albumId}/tracks?limit=100`);

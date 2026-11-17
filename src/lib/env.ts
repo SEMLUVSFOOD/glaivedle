@@ -1,4 +1,6 @@
 import "server-only";
+import os from "node:os";
+import path from "node:path";
 
 function str(name: string, fallback = ""): string {
   const v = process.env[name];
@@ -26,6 +28,16 @@ export const env = {
   geniusToken: str("GENIUS_ACCESS_TOKEN"),
   dailyTimezone: str("DAILY_TIMEZONE", "Europe/Amsterdam"),
   launchDate: str("LAUNCH_DATE", "2026-11-17"),
-  databasePath: str("DATABASE_PATH", "./data/glaivedle.db"),
+  // In dev the DB lives outside the project: SQLite touches its -shm file on every read,
+  // which would make the dev server's file watcher reload the page in a loop.
+  databasePath: str(
+    "DATABASE_PATH",
+    process.env.NODE_ENV === "production" ? "./data/glaivedle.db" : path.join(os.homedir(), ".glaivedle", "glaivedle.db"),
+  ),
+  /** Distributor labels whose uploads are leaks/unofficial → treated as unreleased (hard mode). */
+  unreleasedLabels: str("UNRELEASED_LABELS", "Too Lost")
+    .split(",")
+    .map((l) => l.trim().toLowerCase())
+    .filter(Boolean),
   syncIntervalHours: Number(str("SYNC_INTERVAL_HOURS", "24")) || 0,
 };

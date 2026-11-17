@@ -107,7 +107,9 @@ function coverReleases(artistId: number, hard: boolean): ReleaseRow[] {
   const rows = db()
     .prepare(
       `SELECT id, title, type, release_date, cover_url, deezer_id FROM releases
-       WHERE artist_id = ? AND enabled = 1 AND cover_url IS NOT NULL ${hard ? "" : "AND type != 'feature'"}
+       WHERE artist_id = ? AND enabled = 1 AND cover_url IS NOT NULL
+       ${hard ? "" : `AND type NOT IN ('feature', 'unreleased')
+         AND NOT EXISTS (SELECT 1 FROM songs s WHERE s.release_id = releases.id AND s.unreleased = 1)`}
        ORDER BY CASE type WHEN 'album' THEN 0 WHEN 'ep' THEN 1 WHEN 'single' THEN 2 ELSE 3 END, release_date`,
     )
     .all(artistId) as ReleaseRow[];
@@ -159,14 +161,14 @@ export function options(artistId: number, mode: Mode, hard: boolean): Option[] {
 function toClassic(s: SongRow): ClassicSong {
   return {
     id: s.id,
-    releaseId: s.release_id,
+    releaseId: s.unreleased ? null : s.release_id,
     project: s.unreleased ? "Unreleased" : (s.r_title ?? "—"),
     type: songType(s),
     year: s.release_date ? Number(s.release_date.slice(0, 4)) : null,
     collaborators: JSON.parse(s.collaborators),
     producers: JSON.parse(s.producers),
     duration: s.duration,
-    trackNumber: s.track_number,
+    trackNumber: s.unreleased ? null : s.track_number,
   };
 }
 
@@ -377,7 +379,7 @@ export function guess(token: string, guessId: number | null): { entry: GuessEntr
       entry = { id: r.id, title: r.title, cover: null, correct };
     } else {
       const s = songById(t.a, guessId);
-      if (!s || (!t.h && (s.unreleased || s.is_feature))) return { error: "Unknown song.", status: 400 };
+      if (!s || (!t.h && (s.unreleased || s.is_feature) && s.id !== t.x)) return { error: "Unknown song.", status: 400 };
       entry = { id: s.id, title: s.title, cover: s.r_cover ?? s.cover_url, correct };
       if (t.m === "classic") {
         const answer = songById(t.a, t.x);
