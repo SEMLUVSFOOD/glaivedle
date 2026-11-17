@@ -102,7 +102,7 @@ export default async function AdminDashboard() {
                     <td className="py-2">
                       {daily
                         .filter((x) => x.mode === m)
-                        .map((x) => `${x.hard ? "💀 " : ""}${x.title ?? x.rtitle}`)
+                        .map((x) => `${x.title ?? x.rtitle}${x.hard ? " (unreleased)" : ""}`)
                         .join(" / ") || "not generated yet"}
                     </td>
                     <td className="py-2 text-right tabular-nums">{p ? `${p.w}/${p.c} won` : "0"}</td>

@@ -6,7 +6,7 @@ export function shareText(round: RoundView, guesses: GuessEntry[], site: string,
     "glaivedle",
     round.kind === "endless" ? "∞" : `#${round.number}`,
     `· ${MODE_INFO[round.mode].title}`,
-    round.hard ? "· 💀 unreleased" : "",
+    round.hard ? "· unreleased" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -22,6 +22,6 @@ export function shareText(round: RoundView, guesses: GuessEntry[], site: string,
     while (cells.length < max) cells.push("⬜");
     body = `${round.won ? `${guesses.length}/${max}` : `X/${max}`}\n${cells.join("")}`;
   }
-  const run = streak > 1 ? `\n🔥 ${streak} ${round.kind === "endless" ? "in a row" : round.kind === "archive" ? "archive streak" : "day streak"}` : "";
+  const run = streak > 1 ? `\n${streak} ${round.kind === "endless" ? "in a row" : round.kind === "archive" ? "archive streak" : "day streak"}` : "";
   return `${head}\n${body}${run}\n${site}`;
 }

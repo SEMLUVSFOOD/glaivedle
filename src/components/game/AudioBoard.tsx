@@ -5,7 +5,7 @@ import type { RoundView } from "@/lib/game/types";
 
 const fmt = (s: number) => `0:${String(Math.floor(s)).padStart(2, "0")}`;
 
-/** Styled after the glaivemusic.com video player: a black frame with "▶ Play" in the corner. */
+/** Styled after the glaivemusic.com video player: a black frame with "Play" in the corner. */
 export function AudioBoard({ round }: { round: RoundView }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -95,13 +95,38 @@ export function AudioBoard({ round }: { round: RoundView }) {
           {!round.finished &&
             clips.map((c) => <span key={c} className="absolute -top-1 h-[11px] w-px bg-[#444]" style={{ left: `${(c / scale) * 100}%` }} />)}
         </span>
-        <span className="small absolute bottom-3 left-3 text-white">
-          {failed ? "Preview unavailable" : !ready ? "Loading…" : playing ? "❚❚ Pause" : "▶ Play"}
+        <span className="small absolute bottom-3 left-3 flex items-center gap-1.5 text-white">
+          {failed ? (
+            "Preview unavailable"
+          ) : !ready ? (
+            "Loading…"
+          ) : (
+            <>
+              <PlayIcon playing={playing} />
+              {playing ? "Pause" : "Play"}
+            </>
+          )}
         </span>
         <span className="small absolute right-3 bottom-3 text-[#9a9a9a]">
           {round.finished ? "Full preview" : `${limit}s unlocked`}
         </span>
       </button>
     </div>
+  );
+}
+
+/** Drawn icon instead of ▶ / ❚❚ characters, which iOS renders as coloured emoji. */
+function PlayIcon({ playing }: { playing: boolean }) {
+  return (
+    <svg viewBox="0 0 10 10" width="10" height="10" aria-hidden className="flex-none fill-current">
+      {playing ? (
+        <>
+          <rect x="1.5" y="1" width="2.5" height="8" />
+          <rect x="6" y="1" width="2.5" height="8" />
+        </>
+      ) : (
+        <path d="M2 1 L9 5 L2 9 Z" />
+      )}
+    </svg>
   );
 }

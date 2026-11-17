@@ -26,4 +26,4 @@ export function rateLimitKey(key: string, limit: number, windowMs: number): bool
   return b.count <= limit;
 }
 
-export const tooMany = () => Response.json({ error: "Slow down a little 🙏" }, { status: 429 });
+export const tooMany = () => Response.json({ error: "Slow down a little." }, { status: 429 });
