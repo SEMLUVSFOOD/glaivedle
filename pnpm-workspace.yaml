@@ -1,0 +1,9 @@
+allowBuilds:
+  better-sqlite3: true
+  sharp: false
+  unrs-resolver: false
+  esbuild: false
+minimumReleaseAgeExclude:
+  - lucide-react@1.74.0
+overrides:
+  "minimatch@>=7.0.0 <11.0.1": ^11.0.1
