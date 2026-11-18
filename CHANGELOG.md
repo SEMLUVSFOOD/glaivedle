@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-11-18
+
+### Changed
+
+- ovine hall songs count as glaive songs: their releases keep their real type (Album / EP / Single) in classic
+  tiles, the guess list, cover mode and the database, instead of a separate "ovine hall" type. They're only
+  marked internally so the ovine hall switch can include or leave them out.
+- Existing catalogs are converted by a migration and re-synced automatically on deploy.
+
 ## [0.5.1] - 2026-11-18
 
 ### Changed
@@ -113,7 +122,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - glaive "God Save The Three" theme, mobile-first layout.
 - Docker image, Docker Compose file and Coolify instructions; health endpoint.
 
-[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.0...v0.4.1
