@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-11-18
+
+### Changed
+
+- Features on other artists' songs are released songs: they're part of the Released pool (type "Feature", like
+  Album / EP / Single) instead of the Unreleased pool. Unreleased now only adds leaks.
+
 ## [0.5.2] - 2026-11-18
 
 ### Changed
@@ -122,7 +129,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - glaive "God Save The Three" theme, mobile-first layout.
 - Docker image, Docker Compose file and Coolify instructions; health endpoint.
 
-[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/SEMLUVSFOOD/glaivedle/compare/v0.4.1...v0.5.0
