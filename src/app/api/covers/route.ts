@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const rows = db()
     .prepare(
       `SELECT title, cover_url FROM releases WHERE artist_id = ? AND enabled = 1 AND cover_url IS NOT NULL
-         AND type NOT IN ('feature', 'unreleased', 'alias')
+         AND type NOT IN ('feature', 'unreleased') AND alias IS NULL
          AND NOT EXISTS (SELECT 1 FROM songs s WHERE s.release_id = releases.id AND s.unreleased = 1)
        ORDER BY release_date DESC`,
     )

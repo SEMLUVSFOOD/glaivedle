@@ -139,6 +139,17 @@ const MIGRATIONS: { id: number; sql: string }[] = [
       CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
     `,
   },
+  {
+    id: 6,
+    sql: /* sql */ `
+      -- alias projects (ovine hall) count as the artist's own releases: real album/ep/single type,
+      -- marked by the alias name instead of a separate "alias" type
+      ALTER TABLE releases ADD COLUMN alias TEXT;
+      UPDATE releases SET alias = COALESCE(label, 'alias'), label = NULL, type = 'single' WHERE type = 'alias';
+      UPDATE songs SET unreleased = 0
+        WHERE status_override IS NULL AND release_id IN (SELECT id FROM releases WHERE alias IS NOT NULL);
+    `,
+  },
 ];
 
 declare global {

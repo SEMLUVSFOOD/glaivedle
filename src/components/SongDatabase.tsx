@@ -16,7 +16,7 @@ const SORTS: { value: Sort; label: string }[] = [
   { value: "az", label: "A–Z" },
 ];
 
-const TYPE_ORDER = ["album", "ep", "single", "feature", "alias", "unreleased"];
+const TYPE_ORDER = ["album", "ep", "single", "feature", "unreleased"];
 
 const year = (s: CatalogSong) => s.date?.slice(0, 4) ?? "?";
 

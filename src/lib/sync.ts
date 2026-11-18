@@ -7,13 +7,15 @@ import * as genius from "./sources/genius";
 import * as lrclib from "./sources/lrclib";
 import { ERAS, type Leak, LEAKS } from "./leaks";
 
-type ReleaseType = "album" | "ep" | "single" | "feature" | "unreleased" | "alias";
-const RANK: Record<ReleaseType, number> = { album: 0, ep: 1, single: 2, feature: 3, unreleased: 4, alias: 5 };
+type ReleaseType = "album" | "ep" | "single" | "feature" | "unreleased";
+const RANK: Record<ReleaseType, number> = { album: 0, ep: 1, single: 2, feature: 3, unreleased: 4 };
 
 type ReleaseDraft = {
   key: string; // deezer id or synthetic
   title: string;
   label?: string | null;
+  /** alias project it was released under (e.g. "ovine hall"); counts as the artist's own release */
+  alias?: string | null;
   type: ReleaseType;
   releaseDate: string | null;
   cover: string | null;
@@ -57,7 +59,7 @@ export type SyncResult = { ok: boolean; songs: number; log: string[] };
  * On boot, a catalog produced by an older version is re-synced immediately instead of
  * waiting for the 24h interval – otherwise a deploy keeps serving the old catalog.
  */
-export const SYNC_VERSION = "2026-11-18.1";
+export const SYNC_VERSION = "2026-11-18.2";
 
 export function syncedVersion(): string | null {
   return (db().prepare("SELECT value FROM meta WHERE key = 'sync_version'").get() as { value: string } | undefined)?.value ?? null;
@@ -339,7 +341,8 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
     applyLeaks(songs, LEAKS);
     say(`Leaks: ${LEAKS.length} curated leaked songs applied`);
 
-    // ── 3c. Alias projects (e.g. ovine hall): released under another name → own switch in the game ──
+    // ── 3c. Alias projects (e.g. ovine hall): counted as the artist's own releases (real album/ep/single
+    //        type), only marked with the alias so players can switch them on/off ──
     for (const alias of env.aliasArtists) {
       try {
         const aliasAlbums = (await deezer.artistAlbums(alias.deezerId)).filter((a) => !isVariantTitle(a.title));
@@ -348,8 +351,8 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
           const release: ReleaseDraft = {
             key: String(album.id),
             title: album.title,
-            label: alias.name,
-            type: "alias",
+            alias: alias.name,
+            type: album.record_type === "album" ? "album" : album.record_type === "ep" ? "ep" : "single",
             releaseDate: album.release_date || null,
             cover: album.cover_xl || album.cover_big || null,
           };
@@ -374,7 +377,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
               collaborators: featuresFromTitle(t.title),
               producers: prev?.producers ?? [],
               hasPreview: !!t.preview,
-              unreleased: true,
+              unreleased: false,
               isFeature: false,
               era: `alias:${alias.slug}`,
             });
@@ -389,10 +392,11 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
 
     // ── 4. Persist ─────────────────────────────────────────────────────
     const upsertRelease = d.prepare(`
-      INSERT INTO releases (artist_id, deezer_id, title, title_norm, type, release_date, cover_url, label)
-      VALUES (@artistId, @key, @title, @norm, @type, @releaseDate, @cover, @label)
+      INSERT INTO releases (artist_id, deezer_id, title, title_norm, type, release_date, cover_url, label, alias)
+      VALUES (@artistId, @key, @title, @norm, @type, @releaseDate, @cover, @label, @alias)
       ON CONFLICT(artist_id, deezer_id) DO UPDATE SET
         title = excluded.title, title_norm = excluded.title_norm, type = excluded.type, label = excluded.label,
+        alias = excluded.alias,
         release_date = excluded.release_date, cover_url = excluded.cover_url
       RETURNING id`);
     const upsertSong = d.prepare(`
@@ -423,6 +427,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
           releaseDate: r.releaseDate,
           cover: r.cover,
           label: r.label ?? null,
+          alias: r.alias ?? null,
         }) as { id: number };
         releaseIds.set(r.key, row.id);
       }
@@ -440,6 +445,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
               releaseDate: s.release.releaseDate,
               cover: s.release.cover,
               label: s.release.label ?? null,
+              alias: s.release.alias ?? null,
             }) as { id: number };
             releaseId = r.id;
             releaseIds.set(s.release.key, releaseId);

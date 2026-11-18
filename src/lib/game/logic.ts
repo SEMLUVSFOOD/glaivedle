@@ -55,7 +55,6 @@ const TYPE_LABEL: Record<string, string> = {
   single: "Single",
   feature: "Feature",
   unreleased: "Unreleased",
-  alias: "ovine hall",
 };
 export const typeLabel = (t: string) => TYPE_LABEL[t] ?? t;
 

@@ -71,19 +71,19 @@ type SongRow = {
   r_type: string | null;
   r_cover: string | null;
   r_label: string | null;
+  r_alias: string | null;
 };
 
-/** Released under an alias (ovine hall): unreleased pool, but with a real release. */
-const isAlias = (s: SongRow) => s.r_type === "alias";
+/** Released under an alias (ovine hall): a normal glaive release, only behind its own on/off switch. */
+const isAlias = (s: SongRow) => s.r_alias !== null && s.r_alias !== undefined;
 
 const SONG_SELECT = `
-  SELECT s.*, r.title AS r_title, r.type AS r_type, r.cover_url AS r_cover, r.label AS r_label
+  SELECT s.*, r.title AS r_title, r.type AS r_type, r.cover_url AS r_cover, r.label AS r_label, r.alias AS r_alias
   FROM songs s LEFT JOIN releases r ON r.id = s.release_id`;
 
 type ReleaseRow = { id: number; title: string; type: string; release_date: string | null; cover_url: string | null; deezer_id: string | null };
 
 function songType(s: SongRow): string {
-  if (isAlias(s)) return "alias";
   if (s.unreleased) return "unreleased";
   if (s.is_feature) return "feature";
   return s.r_type ?? "single";
@@ -91,7 +91,6 @@ function songType(s: SongRow): string {
 
 /** What a song's "project" is called: its release, or its leak era for unreleased songs. */
 function projectOf(s: SongRow): string {
-  if (isAlias(s)) return s.r_title ?? s.r_label ?? "Alias";
   if (s.unreleased) return eraLabel(s.era) ?? "Unreleased";
   return s.r_title ?? "Single";
 }
@@ -126,7 +125,7 @@ function inPool(s: SongRow, hard: boolean, alias: boolean): boolean {
 }
 
 function guessableSongs(artistId: number, hard: boolean, alias: boolean): SongRow[] {
-  const aliasSql = "(r.type IS NOT NULL AND r.type = 'alias')";
+  const aliasSql = "(r.alias IS NOT NULL)";
   const where = hard
     ? alias
       ? ""
@@ -147,10 +146,10 @@ function coverReleases(artistId: number, hard: boolean, alias: boolean): Release
          hard
            ? alias
              ? ""
-             : "AND type != 'alias'"
-           : `AND ((type NOT IN ('feature', 'unreleased', 'alias')
+             : "AND alias IS NULL"
+           : `AND ((alias IS NULL AND type NOT IN ('feature', 'unreleased')
                AND NOT EXISTS (SELECT 1 FROM songs s WHERE s.release_id = releases.id AND s.unreleased = 1))
-               ${alias ? "OR type = 'alias'" : ""})`
+               ${alias ? "OR alias IS NOT NULL" : ""})`
        }
        ORDER BY CASE type WHEN 'album' THEN 0 WHEN 'ep' THEN 1 WHEN 'single' THEN 2 ELSE 3 END, release_date`,
     )
@@ -194,9 +193,7 @@ export function options(artistId: number, mode: Mode, hard: boolean, alias: bool
   return guessableSongs(artistId, hard, alias).map((s) => ({
     id: s.id,
     title: s.title,
-    sub: isAlias(s)
-      ? `${s.r_label ?? "Alias"} · ${s.r_title}`
-      : s.unreleased
+    sub: s.unreleased
         ? `Unreleased · ${eraLabel(s.era) ?? "leak"}`
         : (s.r_title ?? "Single"),
     cover: s.r_cover ?? s.cover_url,
@@ -535,14 +532,14 @@ export async function listenFor(artist: ArtistRow, kind: "song" | "release", id:
   if (kind === "release") {
     const r = releaseById(artist.id, id);
     if (!r) return null;
-    const label = (db().prepare("SELECT label FROM releases WHERE id = ?").get(id) as { label: string | null }).label;
+    const aliasName = (db().prepare("SELECT alias FROM releases WHERE id = ?").get(id) as { alias: string | null }).alias;
     return listenLinks({
       kind: "album",
       title: r.title,
-      artist: r.type === "alias" ? (label ?? artist.name) : artist.name,
+      artist: aliasName ?? artist.name,
       deezerId: r.deezer_id && /^\d+$/.test(r.deezer_id) ? r.deezer_id : null,
       geniusUrl: null,
-      unreleased: r.type === "unreleased" || r.type === "alias",
+      unreleased: r.type === "unreleased",
     });
   }
   const s = songById(artist.id, id);
@@ -550,7 +547,7 @@ export async function listenFor(artist: ArtistRow, kind: "song" | "release", id:
   return listenLinks({
     kind: "song",
     title: s.title,
-    artist: isAlias(s) ? (s.r_label ?? artist.name) : artist.name,
+    artist: s.r_alias ?? artist.name,
     deezerId: s.deezer_id,
     geniusUrl: s.genius_url,
     unreleased: !!s.unreleased,
