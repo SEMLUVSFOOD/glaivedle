@@ -121,7 +121,8 @@ export const poolId = (hard: boolean, alias: boolean): PoolId => (hard ? (alias 
 /** Is a song part of the pool for these switches? */
 function inPool(s: SongRow, hard: boolean, alias: boolean): boolean {
   if (isAlias(s)) return alias;
-  return hard || (!s.unreleased && !s.is_feature);
+  // features are released songs (a sub-category of released), so only leaks need the unreleased switch
+  return hard || !s.unreleased;
 }
 
 function guessableSongs(artistId: number, hard: boolean, alias: boolean): SongRow[] {
@@ -130,7 +131,7 @@ function guessableSongs(artistId: number, hard: boolean, alias: boolean): SongRo
     ? alias
       ? ""
       : `AND NOT ${aliasSql}`
-    : `AND ((s.unreleased = 0 AND s.is_feature = 0 AND NOT ${aliasSql})${alias ? ` OR ${aliasSql}` : ""})`;
+    : `AND ((s.unreleased = 0 AND NOT ${aliasSql})${alias ? ` OR ${aliasSql}` : ""})`;
   return db()
     .prepare(`${SONG_SELECT} WHERE s.artist_id = ? AND s.enabled = 1 ${where} ORDER BY s.title COLLATE NOCASE`)
     .all(artistId) as SongRow[];
@@ -147,7 +148,7 @@ function coverReleases(artistId: number, hard: boolean, alias: boolean): Release
            ? alias
              ? ""
              : "AND alias IS NULL"
-           : `AND ((alias IS NULL AND type NOT IN ('feature', 'unreleased')
+           : `AND ((alias IS NULL AND type != 'unreleased'
                AND NOT EXISTS (SELECT 1 FROM songs s WHERE s.release_id = releases.id AND s.unreleased = 1))
                ${alias ? "OR alias IS NOT NULL" : ""})`
        }
@@ -212,7 +213,7 @@ export function catalog(artistId: number): CatalogSong[] {
       project: projectOf(s),
       type,
       typeLabel: typeLabel(type),
-      pool: isAlias(s) ? "ovinehall" : s.unreleased || s.is_feature ? "unreleased" : "released",
+      pool: isAlias(s) ? "ovinehall" : s.unreleased ? "unreleased" : "released",
       date: s.release_date,
       duration: s.duration,
       track: s.unreleased && !isAlias(s) ? null : s.track_number,

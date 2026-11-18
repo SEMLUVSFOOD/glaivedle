@@ -18,7 +18,7 @@ A fan-made, open-source -dle game in the spirit of Wordle, loldle and Hitster. F
   a filterable Stats dialog
 - 🗂 **Archive** — play every past day
 - ♾ **Endless** — unlocks per mode once you've finished that day's daily
-- 💀 **Released / Unreleased** — the "Unreleased" song pool (hard mode) adds leaks, unreleased songs and features, shorter audio clips, colourless covers; separate dailies and stats
+- 💀 **Released / Unreleased** — the "Unreleased" song pool adds leaks and unreleased songs, with shorter audio clips; separate dailies and stats. Features on other artists' songs count as released
 - 🎧 **Listen anywhere** — after a round (or in the database) pick your platform in the app: Spotify, Apple Music,
   YouTube (Music), Deezer, SoundCloud, TIDAL, Amazon Music; remember a default in Settings
 - 🗃 **Database** (`/database`) — every song in the game, searchable and filterable (released / unreleased, type), with

@@ -221,7 +221,7 @@ async function doSync({ slug, name, deezerId }: { slug: string; name: string; de
     }
     say(`Fetched contributor credits for ${fetched} new songs`);
 
-    // ── 2. Features on other artists' songs (hard mode) ────────────────
+    // ── 2. Features on other artists' songs (released songs, type "Feature") ──
     try {
       const feats = await deezer.featuredOn(artist);
       for (const t of feats) {

@@ -81,7 +81,7 @@ function HelpBody() {
       </p>
       <p className="small">
         <span className="text-fg-hover">Released</span> uses only officially released songs.{" "}
-        <span className="text-fg-hover">Unreleased</span> adds leaks, unreleased songs and features and shortens audio clips – the
+        <span className="text-fg-hover">Unreleased</span> adds leaks and unreleased songs and shortens audio clips – the
         hard way to play. <span className="text-fg-hover">ovine hall</span> is a separate switch. Each combination has its own
         dailies, stats and streaks. Switch them and hide album covers in{" "}
         <span className="text-fg-hover">Settings</span>. New puzzles pick themselves at midnight, Amsterdam time.

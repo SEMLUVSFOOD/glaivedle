@@ -76,7 +76,7 @@ export default async function AdminDashboard() {
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Songs" value={songs.total ?? 0} sub={`${songs.enabled ?? 0} enabled · ${releases} releases`} />
-        <Stat label="Hard-only" value={(songs.unreleased ?? 0) + (songs.features ?? 0)} sub={`${songs.unreleased ?? 0} unreleased · ${songs.features ?? 0} features`} />
+        <Stat label="Unreleased" value={songs.unreleased ?? 0} sub={`${songs.features ?? 0} features (released)`} />
         <Stat label="Lyrics" value={songs.lyrics ?? 0} sub={`${songs.previews ?? 0} with audio preview`} />
         <Stat label="Producer credits" value={songs.producers ?? 0} sub={env.geniusToken ? "Genius connected" : "Add GENIUS_ACCESS_TOKEN"} />
         <Stat label="Plays (all time)" value={playsAll} />

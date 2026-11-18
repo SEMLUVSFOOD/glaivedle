@@ -75,8 +75,8 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
 /** What the two difficulties are called in the UI (internally still "hard"). */
 export const POOL_LABEL = { normal: "Released", hard: "Unreleased" } as const;
 export const POOL_HINT = {
-  normal: "Only officially released songs from albums, EPs and singles",
-  hard: "Adds leaks, unreleased songs and features – shorter audio clips",
+  normal: "Officially released songs: albums, EPs, singles and features",
+  hard: "Adds leaks and unreleased songs – shorter audio clips",
 } as const;
 
 /** Released | Unreleased switch, shared by the game pages, archive, settings and stats. */
